@@ -4,7 +4,7 @@
 @use "sass:math";
 @use "media-query" as *;
 
-$pcWidth: 1520;
+$pcWidth: 1440;
 $sideBarWidth: 240;
 $pcRate: math.div(100, $pcWidth);
 
@@ -37,15 +37,19 @@ Calculate VW in PC
   @return $pcHeightRate * $size * 1vh;
 }
 
-// PC・SPともにvwで返す
-@mixin getSize($property, $sizeSP: false, $sizePC: false) {
+@mixin getSize($property, $sizePC: false, $sizeSP: false) {
   @if $sizePC {
     @include mq-pc {
       #{$property}: getVWPC($sizePC);
     }
+    @include mq-min-1440 {
+      #{$property}: $sizePC * 1px;
+    }
+    @include mq-sp {
+      #{$property}: getVWSP(calc($sizePC * 14 / 16));
+    }
   }
   @if $sizeSP {
-    #{$property}: $sizeSP * 1.466666px;
     @include mq-sp {
       #{$property}: getVWSP($sizeSP);
     }
