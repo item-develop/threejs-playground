@@ -1,0 +1,61 @@
+@use "../mixin/get-size" as *;
+
+/* ========================================
+  Margin
+======================================== */
+@mixin margin-side-auto() {
+  margin-left: auto;
+  margin-right: auto;
+}
+@mixin margin($pcPx: false, $spPx: false) {
+  @include getSize(margin, $pcPx, $spPx)
+}
+@mixin marginPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin, $pcPx, $spPx)
+}
+
+@mixin mt($pcPx: false, $spPx: false) {
+  @include getSize(margin-top, $pcPx, $spPx);
+}
+@mixin mtPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin-top, $pcPx, $spPx);
+}
+
+@mixin ml($pcPx: false, $spPx: false) {
+  @include getSize(margin-left, $pcPx, $spPx);
+}
+@mixin mlPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin-left, $pcPx, $spPx);
+}
+
+@mixin mb($pcPx: false, $spPx: false) {
+  @include getSize(margin-bottom, $pcPx, $spPx);
+}
+@mixin mbPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin-bottom, $pcPx, $spPx);
+}
+
+@mixin mr($pcPx: false, $spPx: false) {
+  @include getSize(margin-right, $pcPx, $spPx);
+}
+@mixin mrPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin-right, $pcPx, $spPx);
+}
+
+@mixin mtb($pcPx: false, $spPx: false) {
+  @include getSize(margin-top, $pcPx, $spPx);
+  @include getSize(margin-bottom, $pcPx, $spPx);
+}
+@mixin mtbPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin-top, $pcPx, $spPx);
+  @include getSizePcPxSpVw(margin-bottom, $pcPx, $spPx);
+}
+
+@mixin mlr($pcPx: false, $spPx: false) {
+  @include getSize(margin-left, $pcPx, $spPx);
+  @include getSize(margin-right, $pcPx, $spPx);
+}
+@mixin mlrPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(margin-left, $pcPx, $spPx);
+  @include getSizePcPxSpVw(margin-right, $pcPx, $spPx);
+}

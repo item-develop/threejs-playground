@@ -1,0 +1,210 @@
+@use "../global" as *;
+
+/* ========================================
+  Base
+  Note: Difine your base style
+======================================== */
+// body {
+//   font-family: $font-family-primary;
+//   font-weight: 400;
+//   color: $color-text-primary;
+// }
+.fadeIn {
+  opacity: 0;
+  &.inview {
+    transition: opacity 0.5s ease-in-out 0.1s;
+    opacity: 1;
+  }
+}
+
+.fadeInUp {
+  opacity: 0;
+  transform: translateY(30px);
+  &.inview {
+    transition: transform 1.5s #{$easeOutCubic}, opacity 0.5s ease-in-out;
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+@keyframes maniStamp {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) translate(30px, -30px) scale(1.1);
+  }
+  40% {
+    opacity: 1;
+    transform: rotate(0deg) translate(30px, -30px) scale(1.2);
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes prdTextAnimation {
+  from {
+    opacity: 0;
+    transform: rotate(0deg) translate(30px, 30px) scale(1.1);
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes clipTpRight {
+  from {
+    opacity: 1;
+    clip-path: polygon(0 0, 0% 0, 0% 100%, 0% 100%);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  }
+}
+@keyframes clipTpLeft {
+  from {
+    opacity: 1;
+    clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  }
+}
+@keyframes clipToBottom {
+  from {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 0%, 0% 0%);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+  }
+}
+@keyframes clipTpRightScale {
+  from {
+    opacity: 1;
+    clip-path: polygon(0 0, 0% 0, 0% 100%, 0% 100%);
+    transform: scale(1.3);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%);
+    transform: scale(1);
+  }
+}
+@keyframes arrowBottom {
+  from {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+  100% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes scaleUpLg {
+  from {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes shineAnimation {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+@keyframes shineAnimationSmall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes maniStamp {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) translate(30px, -30px) scale(1);
+  }
+  40% {
+    opacity: 1;
+    transform: rotate(0deg) translate(30px, -30px) scale(1.05);
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes maniStampRev {
+  from {
+    opacity: 0;
+    transform: rotate(10deg) translate(-30px, -30px) scale(1.1);
+  }
+  40% {
+    opacity: 1;
+    transform: rotate(0deg) translate(-30px, -30px) scale(1.2);
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes storeBound {
+  from {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1);
+  }
+  65% {
+    transform: scale(1.05);
+  }
+  95% {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1);
+  }
+}

@@ -1,0 +1,19 @@
+@use '../mixin/get-size' as *;
+
+/* ========================================
+  button
+======================================== */
+@mixin button-reset() {
+  -webkit-appearance: none; /* 1 */
+  appearance: none;
+  vertical-align: middle;
+  color: inherit;
+  font: inherit;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+  text-align: inherit;
+  text-transform: inherit; /* 2 */
+  border: none;
+}

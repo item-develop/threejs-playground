@@ -1,0 +1,67 @@
+/* ========================================
+  Media Query Mixin
+======================================== */
+$breakpoint: 768px;
+$designHeight: 670px;
+
+@mixin mq-min($width) {
+  @media screen and (min-width: $width) {
+    @content;
+  }
+}
+@mixin mq-max($width) {
+  @media screen and (max-width: $width) {
+    @content;
+  }
+}
+
+@mixin mq-min-height($height: $designHeight) {
+  @media screen and (min-height: $height) {
+    @content;
+  }
+}
+
+@mixin mq-max-height($height: $designHeight) {
+  @media screen and (max-height: $height) {
+    @content;
+  }
+}
+
+@mixin mq-sp {
+  @include mq-max($breakpoint) {
+    @content;
+  }
+}
+
+@mixin mq-pc {
+  @include mq-min($breakpoint + 1) {
+    @content;
+  }
+}
+
+@mixin mq-min-1440 {
+  @include mq-min(1440px) {
+    @content;
+  }
+}
+@mixin mq-min-1280 {
+  @include mq-min(1281px) {
+    @content;
+  }
+}
+@mixin mq-max-1520 {
+  @include mq-max(1520px) {
+    @content;
+  }
+}
+@mixin mq-min-1521 {
+  @include mq-min(1521px) {
+    @content;
+  }
+}
+
+@mixin device-hover {
+  @media (hover: hover) and (min-width: $breakpoint + 1) {
+    @content;
+  }
+}

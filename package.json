@@ -1,0 +1,39 @@
+{
+  "name": "horizon-capital",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && html-beautify dist/**/*.html && find . -name \"._*\" -type f -delete",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^5.0.0",
+    "@types/youtube": "^0.0.47",
+    "@splidejs/splide": "^4.1.4",
+    "autoprefixer": "^10.4.14",
+    "css-declaration-sorter": "^6.4.0",
+    "js-beautify": "^1.14.7",
+    "postcss": "^8.4.23",
+    "postcss-normalize-charset": "^6.0.0",
+    "postcss-sort-media-queries": "^5.1.0",
+    "sass": "^1.62.1",
+    "typescript": "^5.0.2",
+    "vite": "^4.3.2",
+    "vite-plugin-handlebars": "^1.6.0"
+  },
+  "browserslist": [
+    "last 3 versions",
+    "> 5%",
+    "Firefox ESR",
+    "not dead"
+  ],
+  "dependencies": {
+    "gsap": "^3.12.2",
+    "vite-plugin-ejs": "^1.7.0",
+    "@studio-freight/lenis": "^1.0.34",
+    "sweet-scroll": "^4.0.0",
+    "video.js": "^8.3.0"
+  }
+}

@@ -1,0 +1,114 @@
+/* ========================================
+  Size Mixin
+======================================== */
+@use "../mixin/get-size" as *;
+@use "media-query" as *;
+@mixin w($pcPx: false, $spPx: false) {
+  @include getSize(width, $pcPx, $spPx);
+}
+
+@mixin h($pcPx: false, $spPx: false) {
+  @include getSize(height, $pcPx, $spPx);
+}
+@mixin minH($pcPx: false, $spPx: false) {
+  @include getSize(min-height, $pcPx, $spPx);
+}
+@mixin minW($pcPx: false, $spPx: false) {
+  @include getSize(min-width, $pcPx, $spPx);
+}
+@mixin maxH($pcPx: false, $spPx: false) {
+  @include getSize(max-height, $pcPx, $spPx);
+}
+@mixin maxW($pcPx: false, $spPx: false) {
+  @include getSize(max-width, $pcPx, $spPx);
+}
+@mixin gap($pcPx: false, $spPx: false) {
+  @include getSize(gap, $pcPx, $spPx);
+}
+@mixin columnGap($pcPx: false, $spPx: false) {
+  @include getSize(column-gap, $pcPx, $spPx);
+}
+@mixin rowGap($pcPx: false, $spPx: false) {
+  @include getSize(row-gap, $pcPx, $spPx);
+}
+@mixin fz($pcPx: false, $spPx: false) {
+  @include getSize(font-size, $pcPx, $spPx);
+}
+@mixin fzVw($pcPx: false, $spPx: false) {
+  @include getSize(font-size, $pcPx, $spPx);
+}
+@mixin ls($pcPx: false, $spPx: false) {
+  @include getSize(letter-spacing, $pcPx, $spPx);
+}
+@mixin bottom($pcPx: false, $spPx: false) {
+  @include getSize(bottom, $pcPx, $spPx);
+}
+@mixin right($pcPx: false, $spPx: false) {
+  @include getSize(right, $pcPx, $spPx);
+}
+@mixin rightPcVw($pcPx: false, $spPx: false) {
+  @include getSizePcVw(right, $pcPx, $spPx);
+}
+@mixin left($pcPx: false, $spPx: false) {
+  @include getSize(left, $pcPx, $spPx);
+}
+@mixin top($pcPx: false, $spPx: false) {
+  @include getSize(top, $pcPx, $spPx);
+}
+@mixin br($pcPx: false, $spPx: false) {
+  @include getSize(border-radius, $pcPx, $spPx);
+}
+
+@mixin transY($pcPx: false, $spPx: false) {
+  @if $pcPx {
+    @include mq-pc {
+      transform: translateY($pcRate * $pcPx * 1vw);
+    }
+    /*     @include mq-min-1440 {
+      transform: translateY($pcPx * 1px);
+    } */
+    @include mq-sp {
+      transform: translateY($spRate * calc($pcPx * 14 / 16) * 1vw);
+    }
+  }
+  @if $spPx {
+    @include mq-sp {
+      transform: translateY($spRate * calc($spPx * 14 / 16) * 1vw);
+    }
+  }
+}
+@mixin transYRotate($deg: 0, $pcPx: false, $spPx: false) {
+  @if $pcPx {
+    @include mq-pc {
+      transform: translateY($pcRate * $pcPx * 1vw) rotate($deg);
+    }
+    /*  @include mq-min-1440 {
+      transform: translateY($pcPx * 1px) rotate($deg);
+    } */
+    @include mq-sp {
+      transform: translateY($spRate * calc($pcPx * 14 / 16) * 1vw) rotate($deg);
+    }
+  }
+  @if $spPx {
+    @include mq-sp {
+      transform: translateY($spRate * calc($spPx * 14 / 16) * 1vw) rotate($deg);
+    }
+  }
+}
+
+@mixin arrow-hover() {
+  &:hover {
+    .arrow-double {
+      .arrow {
+        &:nth-child(1) {
+          transform: translateX(10px);
+          opacity: 0;
+        }
+        &:nth-child(2) {
+          transform: translateX(0px);
+          opacity: 1;
+        }
+      }
+    }
+  }
+}

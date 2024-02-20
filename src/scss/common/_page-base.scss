@@ -1,0 +1,46 @@
+@use "../global" as *;
+
+/* ========================================
+  Base
+  Note: Difine your base style
+======================================== */
+// body {
+//   font-family: $font-family-primary;
+//   font-weight: 400;
+//   color: $color-text-primary;
+// }
+
+.kaki-container {
+  // noto sans
+  font-family: "Noto Sans JP", sans-serif;
+  font-weight: 400;
+  overflow: hidden;
+  background-size: 100% auto;
+  background-repeat: repeat-y;
+  background-position: center 143vw;
+  @include mq-pc {
+    background-position: center 670px;
+  }
+  z-index: 2;
+  position: relative;
+}
+
+
+.pc_only {
+  @include mq-sp {
+    display: none !important;
+  }
+}
+.sp_only {
+  @include mq-pc {
+    display: none !important;
+  }
+}
+
+.vjs-waiting {
+  visibility: hidden;
+  background: transparent;
+}
+.vjs-loading-spinner {
+  display: none !important;
+}

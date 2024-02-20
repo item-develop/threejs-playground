@@ -1,0 +1,118 @@
+@use "../mixin/get-size" as *;
+@use "../variable/font" as *;
+@use "../variable/color" as *;
+@use "../mixin/media-query" as *;
+
+/* ========================================
+  Font
+======================================== */
+@mixin font-size($pcPx: false, $spPx: false) {
+  @if $pcPx {
+    @include mq-pc {
+      font-size: #{$pcPx}px;
+    }
+  }
+  @if $spPx {
+    @include mq-sp {
+      font-size: getVWSP($spPx);
+    }
+  }
+}
+
+@mixin font-size-vw($pcPx: false, $spPx: false) {
+  @if $pcPx {
+    @include mq-pc {
+      font-size: getVWPC($pcPx);
+    }
+  }
+  @if $spPx {
+    @include mq-sp {
+      font-size: getVWSP($spPx);
+    }
+  }
+}
+
+@mixin line-height($pcPx: false, $spPx: false) {
+  @if $pcPx {
+    @include mq-pc {
+      line-height: #{$pcPx}px;
+    }
+  }
+  @if $spPx {
+    @include mq-sp {
+      line-height: getVWSP($spPx);
+    }
+  }
+}
+
+@mixin line-height-vw($pcPx: false, $spPx: false) {
+  @if $pcPx {
+    @include mq-pc {
+      line-height: getVWPC($pcPx);
+    }
+  }
+  @if $spPx {
+    @include mq-sp {
+      line-height: getVWSP($spPx);
+    }
+  }
+}
+
+@mixin font-size-line-height(
+  $pcFontSize: false,
+  $pcLineHeight: false,
+  $spFontSize: false,
+  $spLineHeight: false
+) {
+  @include font-size($pcFontSize, $spFontSize);
+  @include line-height($pcLineHeight, $spLineHeight);
+}
+
+@mixin font-size-line-height-vw(
+  $pcFontSize: false,
+  $pcLineHeight: false,
+  $spFontSize: false,
+  $spLineHeight: false
+) {
+  @include font-size-vw($pcFontSize, $spFontSize);
+  @include line-height-vw($pcLineHeight, $spLineHeight);
+}
+
+@mixin mont-m() {
+  font-family: $font-mont;
+  font-weight: 500;
+}
+
+@mixin mont-sb() {
+  font-family: $font-mont;
+  font-weight: 600;
+}
+
+@mixin noto-l() {
+  font-family: $font-noto;
+  font-weight: 300;
+}
+@mixin noto-r() {
+  font-family: $font-noto;
+  font-weight: 400;
+}
+@mixin noto-m() {
+  font-family: $font-noto;
+  font-weight: 500;
+}
+@mixin noto-b() {
+  font-family: $font-noto;
+  font-weight: 700;
+}
+
+@mixin font-base() {
+  color: $color-black;
+  @include noto-r;
+}
+
+
+@mixin font-en() {
+  font-family: $font-en;
+  font-weight: 600;
+  font-style: normal;
+}

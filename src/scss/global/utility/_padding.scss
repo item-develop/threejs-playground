@@ -1,0 +1,65 @@
+@use "../mixin/get-size" as *;
+
+/* ========================================
+  Padding
+======================================== */
+@mixin padding($pcPx: false, $spPx: false) {
+  @include getSize(padding, $pcPx, $spPx)
+}
+
+@mixin pt($pcPx: false, $spPx: false) {
+  @include getSize(padding-top, $pcPx, $spPx);
+}
+
+@mixin pl($pcPx: false, $spPx: false) {
+  @include getSize(padding-left, $pcPx, $spPx);
+}
+
+@mixin pb($pcPx: false, $spPx: false) {
+  @include getSize(padding-bottom, $pcPx, $spPx);
+}
+
+@mixin pr($pcPx: false, $spPx: false) {
+  @include getSize(padding-right, $pcPx, $spPx);
+}
+
+@mixin ptb($pcPx: false, $spPx: false) {
+  @include getSize(padding-top, $pcPx, $spPx);
+  @include getSize(padding-bottom, $pcPx, $spPx);
+}
+
+@mixin plr($pcPx: false, $spPx: false) {
+  @include getSize(padding-left, $pcPx, $spPx);
+  @include getSize(padding-right, $pcPx, $spPx);
+}
+
+
+@mixin paddingPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding, $pcPx, $spPx)
+}
+
+@mixin ptPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding-top, $pcPx, $spPx);
+}
+
+@mixin plPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding-left, $pcPx, $spPx);
+}
+
+@mixin pbPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding-bottom, $pcPx, $spPx);
+}
+
+@mixin prPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding-right, $pcPx, $spPx);
+}
+
+@mixin ptbPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding-top, $pcPx, $spPx);
+  @include getSizePcPxSpVw(padding-bottom, $pcPx, $spPx);
+}
+
+@mixin plrPcPxSpVw($pcPx: false, $spPx: false) {
+  @include getSizePcPxSpVw(padding-left, $pcPx, $spPx);
+  @include getSizePcPxSpVw(padding-right, $pcPx, $spPx);
+}

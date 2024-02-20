@@ -1,0 +1,109 @@
+/* ========================================
+  Size Mixin
+======================================== */
+@use "sass:math";
+@use "media-query" as *;
+
+$pcWidth: 1520;
+$sideBarWidth: 240;
+$pcRate: math.div(100, $pcWidth);
+
+$pcHeight: 900;
+$pcHeightRate: math.div(100, $pcHeight);
+
+$spWidth: 375;
+$spRate: math.div(100, $spWidth);
+
+/**
+Calculate VW in SP
+ */
+@function getVWSP($size) {
+  @return $spRate * $size * 1vw;
+}
+/**
+Calculate VW in PC
+ */
+@function getVWPCPercentFv($size) {
+  @return $size / ($pcWidth - $sideBarWidth) * 100%;
+}
+@function getVWPCPercent($size) {
+  @return $size/($pcWidth) * 100%;
+}
+
+@function getVWPC($size) {
+  @return $pcRate * $size * 1vw;
+}
+@function getVHPC($size) {
+  @return $pcHeightRate * $size * 1vh;
+}
+
+// PC・SPともにvwで返す
+@mixin getSize($property, $sizeSP: false, $sizePC: false) {
+  @if $sizePC {
+    @include mq-pc {
+      #{$property}: getVWPC($sizePC);
+    }
+  }
+  @if $sizeSP {
+    #{$property}: $sizeSP * 1.466666px;
+    @include mq-sp {
+      #{$property}: getVWSP($sizeSP);
+    }
+  }
+}
+
+// PC・SPともにvwで返す
+@mixin getSizeFvPercent($property, $sizePC: false, $sizeSP: false) {
+  @if $sizePC {
+    @include mq-pc {
+      #{$property}: getVWPCPercent($sizePC * 1);
+    }
+    @include mq-min-1280 {
+      #{$property}: getVWPCPercentFv($sizePC);
+    }
+  }
+  @if $sizeSP {
+    @include mq-sp {
+      #{$property}: getVWSP($sizeSP);
+    }
+  }
+}
+
+// PCはpx・SPはvwで返す
+@mixin getSizePcPxSpVw($property, $sizePC: false, $sizeSP: false) {
+  @if $sizePC {
+    @include mq-pc {
+      #{$property}: $sizePC * 1px;
+    }
+  }
+  @if $sizeSP {
+    @include mq-sp {
+      #{$property}: getVWSP($sizeSP);
+    }
+  }
+}
+
+// PCはvh・SPはvwで返す
+@mixin getSizePcVhSpVw($property, $sizePC: false, $sizeSP: false) {
+  @if $sizePC {
+    @include mq-pc {
+      #{$property}: getVHPC($sizePC);
+
+      @include mq-min-height(#{$pcHeight}px) {
+        #{$property}: $sizePC * 1px;
+      }
+    }
+  }
+  @if $sizeSP {
+    @include mq-sp {
+      #{$property}: getVWSP($sizeSP);
+    }
+  }
+}
+
+@mixin getSizeMax1440($property, $sizePC: false, $sizeSP: false) {
+  @include getSize($property, $sizePC, $sizeSP);
+  @include mq-min-1440() {
+    #{$property}: #{$sizePC}px;
+  }
+}

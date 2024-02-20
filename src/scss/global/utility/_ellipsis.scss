@@ -1,0 +1,10 @@
+@use "../mixin/get-size" as *;
+@use "../variable/font" as *;
+/* ========================================
+  Ellipsis（3点リーダー）
+======================================== */
+@mixin ellipsis() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
