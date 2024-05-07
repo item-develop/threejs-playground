@@ -5,6 +5,7 @@ import { isSP } from './utils';
 export default class ScrollController {
   lenis: Lenis
   scrollY = 0
+  enable: boolean = false
   constructor() {
     this.lenis = new Lenis()
     this.init()
@@ -14,20 +15,12 @@ export default class ScrollController {
     this.lenis.raf(time)
     requestAnimationFrame(this.animate)
   }
+  isActive = () => {
+    return !isSP() && this.enable
+  }
   resize = () => {
     this.lenis.destroy()
-    console.log('isSP():', isSP());
-    if (isSP()) {
-      /*  this.lenis = new Lenis(
-         {
-           autoResize: true,
-           syncTouch: true,
-           syncTouchLerp: 0.7,
-           lerp: 0.2,
- 
-         }
-       ) */
-    } else {
+    if (this.isActive()) {
       this.lenis = new Lenis(
         {
           autoResize: true,
@@ -45,7 +38,8 @@ export default class ScrollController {
   }
 
   lockBodyScroll = () => {
-    if (!isSP()) {
+    if (!isSP() && this.enable) {
+      if (!this.enable) return
       this.lenis.stop();
     } else {
       this.scrollY = window.scrollY;
@@ -57,7 +51,8 @@ export default class ScrollController {
   };
 
   releaseBodyScroll = () => {
-    if (!isSP()) {
+    if (!isSP() && this.enable) {
+      if (!this.enable) return
       this.lenis.start();
     } else {
       document.body.style.position = "";
