@@ -1,5 +1,6 @@
+import liveReload from 'vite-plugin-live-reload';
 import { rm } from "node:fs/promises";
-import { loadEnv, defineConfig } from "vite";
+import { loadEnv, defineConfig, UserConfigExport } from "vite";
 import { ViteEjsPlugin } from "vite-plugin-ejs";
 import { resolve } from "path";
 
@@ -10,7 +11,7 @@ const inputSource = {
 
 const pageData = {};
 
-export default ({ command, mode }) => {
+export default ({ command, mode }): UserConfigExport => {
   const CWD = process.cwd();
   console.log("command:", command);
   const { VITE_DIST_PATH, VITE_PUBLIC_PATH } = loadEnv(mode, CWD);
@@ -19,6 +20,11 @@ export default ({ command, mode }) => {
     root: "./src", //開発ディレクトリ設定
     server: {
       host: true,
+      watch: {
+        usePolling: true,
+        interval: 100,
+        depth: 5,
+      }
     },
     publicDir: "./public",
     build: {
@@ -29,7 +35,7 @@ export default ({ command, mode }) => {
         //ファイル出力設定
         output: {
           assetFileNames: (assetInfo) => {
-            let extType = assetInfo.name.split(".")[1];
+            let extType = assetInfo.name?.split(".")[1] ?? "";
             //Webフォントファイルの振り分け
             if (/ttf|otf|eot|woff|woff2/i.test(extType)) {
               extType = "fonts";
@@ -69,7 +75,7 @@ export default ({ command, mode }) => {
         baseURL: VITE_PUBLIC_PATH,
       }),
 
-
+      liveReload(['components/**/*.ejs']),
     ],
   };
 };

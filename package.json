@@ -12,11 +12,11 @@
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^5.0.0",
-    "@types/youtube": "^0.0.47",
     "@splidejs/splide": "^4.1.4",
+    "@types/node": "^18.15.11",
+    "@types/youtube": "^0.0.47",
     "autoprefixer": "^10.4.14",
     "css-declaration-sorter": "^6.4.0",
-    "@types/node": "^18.15.11",
     "js-beautify": "^1.14.7",
     "postcss": "^8.4.23",
     "postcss-normalize-charset": "^6.0.0",
@@ -24,7 +24,8 @@
     "sass": "^1.62.1",
     "typescript": "^5.0.2",
     "vite": "^4.3.2",
-    "vite-plugin-handlebars": "^1.6.0"
+    "vite-plugin-handlebars": "^1.6.0",
+    "vite-plugin-live-reload": "^3.0.3"
   },
   "browserslist": [
     "last 3 versions",
@@ -33,10 +34,10 @@
     "not dead"
   ],
   "dependencies": {
-    "gsap": "^3.12.2",
-    "vite-plugin-ejs": "^1.7.0",
     "@studio-freight/lenis": "^1.0.34",
+    "gsap": "^3.12.2",
     "sweet-scroll": "^4.0.0",
-    "video.js": "^8.3.0"
+    "video.js": "^8.3.0",
+    "vite-plugin-ejs": "^1.7.0"
   }
 }
