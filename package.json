@@ -1,12 +1,14 @@
 {
-  "name": "horizon-capital",
+  "name": "vts",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && html-beautify dist/**/*.html && find . -name \"._*\" -type f -delete",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:preview": "tsc && vite build --mode preview",
+    "build:prd": "tsc && vite build --mode prd"
   },
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^5.0.0",
@@ -14,6 +16,7 @@
     "@splidejs/splide": "^4.1.4",
     "autoprefixer": "^10.4.14",
     "css-declaration-sorter": "^6.4.0",
+    "@types/node": "^18.15.11",
     "js-beautify": "^1.14.7",
     "postcss": "^8.4.23",
     "postcss-normalize-charset": "^6.0.0",

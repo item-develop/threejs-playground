@@ -1,12 +1,11 @@
 import IntersectionObserverClass from "./Common/IntersectionObserverClass";
-import MovieModal from "./Common/MovieModal";
 import Para from "./Common/Para";
 import { textLineSplit, textWordSplit } from "./Common/textLineSplit";
 
 
 export default class Common {
   loaded: boolean;
-  timer = 0
+  timer: any = 0
   prevSct = 0
   constructor() {
     this.loaded = false;

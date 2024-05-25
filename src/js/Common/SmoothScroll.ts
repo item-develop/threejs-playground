@@ -41,30 +41,4 @@ export default class SmoothScroll {
     });
   }
 
-  scrollTo(target: string, offset: number) {
-    const element = document.getElementById(target);
-    console.log("element:", element);
-    if (!element) return;
-    const elementPosition = element.getBoundingClientRect().top;
-    const startingPosition = window.pageYOffset;
-    const distance =
-      elementPosition - (offset === undefined ? this.offset : offset);
-    let start = null as null | number;
-
-    const ease = (t: number, b: number, c: number, d: number) => {
-      t /= d / 2;
-      if (t < 1) return (c / 2) * t * t + b;
-      t--;
-      return (-c / 2) * (t * (t - 2) - 1) + b;
-    };
-    const animation = (currentTime: number) => {
-      if (start === null) start = currentTime;
-      const timeElapsed = currentTime - start;
-      const run = ease(timeElapsed, startingPosition, distance, this.duration);
-      window.scrollTo(0, run);
-      if (timeElapsed < this.duration) requestAnimationFrame(animation);
-    };
-
-    requestAnimationFrame(animation);
-  }
 }
