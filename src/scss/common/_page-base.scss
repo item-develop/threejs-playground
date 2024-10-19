@@ -27,3 +27,17 @@ body {
   }
 }
 
+.h-100svh-skel {
+  @include vh(height, 100);
+  position: fixed;
+  pointer-events: none;
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}

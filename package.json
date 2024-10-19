@@ -25,7 +25,8 @@
     "typescript": "^5.0.2",
     "vite": "^4.3.2",
     "vite-plugin-handlebars": "^1.6.0",
-    "vite-plugin-live-reload": "^3.0.3"
+    "vite-plugin-live-reload": "^3.0.3",
+    "@types/three": "^0.166.0"
   },
   "browserslist": [
     "last 3 versions",
@@ -34,6 +35,7 @@
     "not dead"
   ],
   "dependencies": {
+    "three": "^0.166.1",
     "@studio-freight/lenis": "^1.0.34",
     "gsap": "^3.12.2",
     "sweet-scroll": "^4.0.0",

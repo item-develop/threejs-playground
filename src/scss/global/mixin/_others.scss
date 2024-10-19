@@ -120,3 +120,11 @@
   right: 0;
   bottom: 0;
 }
+
+@mixin vh($property, $size: false) {
+  #{$property}: calc(var(--rvh, 1vh) * #{$size});
+  @include mq-sp {
+    #{$property}: calc(var(--vh, 1vh) * #{$size});
+    #{$property}: $size * 1svh;
+  }
+}

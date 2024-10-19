@@ -6,12 +6,9 @@ import Top from "./Top";
 
 export const LOADING_HIDDEN = false;
 window.addEventListener("DOMContentLoaded", () => {
-  const scrollController = new ScrollController();
+  new ScrollController();
 
-  const movieModal = new MovieModal(scrollController);
-  movieModal.init()
 
-  
   const smoothScroll = new SmoothScroll();
   smoothScroll.init();
   new Common();
