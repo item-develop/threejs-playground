@@ -247,3 +247,5 @@ export function isOutsideElement(
     mouseY > rect.bottom
   );
 }
+
+export const numToArray = (num: number) => new Array(num).fill(0).map((_, i) => i);

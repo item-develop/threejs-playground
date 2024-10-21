@@ -1,81 +1,11 @@
-import norenV from './glsl/base.vert?raw'
-import norenF from './glsl/base.frag?raw'
 import "@splidejs/splide/css";
 import "@splidejs/splide/css/skyblue";
 import "@splidejs/splide/css/sea-green";
 import "@splidejs/splide/css/core";
 import * as THREE from 'three';
-import { getVh, isSP, lerp } from './Common/utils';
-import { EffectComposer, RenderPass, UnrealBloomPass } from 'three/examples/jsm/Addons.js';
+import { getVh, lerp, numToArray } from './Common/utils';
 import { createSphereGeometry } from './sphere';
 
-
-type Point = [number, number];
-
-function splineInterpolation(points: Point[], numPoints: number = 100): Point[] {
-  const n = points.length;
-  const result: Point[] = [];
-
-  for (let i = 0; i < n - 1; i++) {
-    const p0 = i > 0 ? points[i - 1] : points[i];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = i < n - 2 ? points[i + 2] : points[i + 1];
-
-    for (let j = 0; j < numPoints / (n - 1); j++) {
-      const t = j / (numPoints / (n - 1));
-      const tt = t * t;
-      const ttt = tt * t;
-
-      const q1 = -ttt + 2 * tt - t;
-      const q2 = 3 * ttt - 5 * tt + 2;
-      const q3 = -3 * ttt + 4 * tt + t;
-      const q4 = ttt - tt;
-
-      const tx = 0.5 * (p0[0] * q1 + p1[0] * q2 + p2[0] * q3 + p3[0] * q4);
-      const ty = 0.5 * (p0[1] * q1 + p1[1] * q2 + p2[1] * q3 + p3[1] * q4);
-
-      result.push([tx, ty]);
-    }
-  }
-
-  return result;
-}
-
-function gaussianBlur(points: Point[], sigma: number): Point[] {
-  const blurredPoints: Point[] = [];
-  const kernelSize = Math.ceil(sigma * 3) * 2 + 1;
-
-  for (let i = 0; i < points.length; i++) {
-    let sumX = 0, sumY = 0, weightSum = 0;
-
-    for (let j = -kernelSize; j <= kernelSize; j++) {
-      const index = Math.min(Math.max(i + j, 0), points.length - 1);
-      const weight = Math.exp(-(j * j) / (2 * sigma * sigma));
-
-      sumX += points[index][0] * weight;
-      sumY += points[index][1] * weight;
-      weightSum += weight;
-    }
-
-    blurredPoints.push([sumX / weightSum, sumY / weightSum]);
-  }
-
-  return blurredPoints;
-}
-
-const SceneConfig = {
-  width: 100,
-  height: 100,
-  halfWidth: 50,
-  halfHeight: 50,
-  sceneWidth: 3,
-  sceneHeight: 3,
-  dpr: 1,
-  aspectRatio: 1,
-};
-
-const yobun = 0.02
 
 export default class Stage {
   renderer: THREE.WebGLRenderer | null = null;
@@ -84,26 +14,18 @@ export default class Stage {
   camera: THREE.PerspectiveCamera | null = null;
   shaderMaterial: THREE.ShaderMaterial | null;
   renderTarget: THREE.WebGLRenderTarget | null = null;
-  sphere: THREE.Points | null = null;
+  sphere: THREE.Points | THREE.Mesh | null = null;
   mesh: THREE.Mesh | null = null;
-  basicMaterial: THREE.ShaderMaterial | null;
+  basicMaterial: THREE.ShaderMaterial | THREE.MeshBasicMaterial | null;
   timer: number = 0;
   fvAnimEnd: boolean = false;
 
   constructor() {
-    // ... (previous constructor code remains the same)
-
     const vh = getVh(100)
     const body = document.querySelector('body') as HTMLElement;
     const canvas = document.createElement('canvas');
     canvas.id = 'three-canvas';
-
-
     body.appendChild(canvas);
-
-
-
-
     this.scene = new THREE.Scene();
     this.bufferScene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
@@ -122,7 +44,6 @@ export default class Stage {
 
     this.renderer.setPixelRatio(
       window.innerWidth < 767 ? 4 :
-        /* Math.min(window.devicePixelRatio, 2) */
         Math.min(4096
           / window.innerWidth, 3)
     );
@@ -130,26 +51,16 @@ export default class Stage {
     this.renderer.setSize(window.innerWidth, vh);
     this.camera.position.z = 5;
 
+    const coordinates = [
+      [-1, -1],
+      [1, -1],
+      [-0.8, 0],
+      [1, -0.3],
+      [0, 0.2],
+      [1, 1],
+      [-1, 1],
+    ];
 
-    // 使用例
-    /* const coordinates = [
-      [-1, 0],
-      [1, 0],
-
-    ]; */
-      const coordinates = [
-        [-1, -1],
-        [1, -1],
-        [-0.8, 0],
-        [1, -0.3],
-        [0, 0.2],
-        [1, 1],
-        [-1, 1]
-      ];
-
-    // 256個の頂点に補間
-    const numToArray = num => new Array(num).fill(0).map((_, i) => i);
-    const lerp = (a, b, t) => a + (b - a) * t; // 線形補間関数
     const lerpCord = numToArray(256).map(el => {
       const unit = 256 / (coordinates.length - 1);
       const startIndex = Math.floor(el / unit);
@@ -161,26 +72,25 @@ export default class Stage {
       const y = lerp(start[1], end[1], lerpRate);
       return { x, y };
     });
-
-    const positions: number[] = [];
+    const positions: number[][] = [];
     lerpCord.forEach(({ x, y }) => {
-      positions.push(x, y, 0); // Z軸を0に固定
+      positions.push([x, y]); // Z軸を0に固定
     });
-    console.log('positions:', positions);
-    // BufferGeometryを使用してジオメトリを作成
-    const geometry = new THREE.BufferGeometry();
-    const vertices = new Float32Array(positions);
-    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-    console.log('geometry:', geometry);
+
+
+    const shape = new THREE.Shape();
+    shape.moveTo(positions[0][0], positions[0][1]); // 最初の座標で移動
+    for (let i = 1; i < positions.length; i++) {
+      shape.lineTo(positions[i][0], positions[i][1]); // 各座標に線を描く
+    }
+    shape.closePath(); // パスを閉じる
+
+    const geometry = new THREE.ShapeGeometry(shape);
 
     const sphereGeometry = true ? geometry
       : createSphereGeometry(15, 15, 1, new THREE.Color(0xff0000));
 
-    console.log('sphereGeometry:', sphereGeometry);
-
-
-    // シェーダーマテリアルの作成
     const textureSize = 16;
     this.renderTarget = new THREE.WebGLRenderTarget(textureSize, textureSize,
       {
@@ -226,7 +136,6 @@ export default class Stage {
     this.basicMaterial = true ? new THREE.ShaderMaterial({
       vertexShader: `
 void main() {
-  gl_PointSize = 30.0;
 	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 }
 `,
@@ -235,17 +144,11 @@ void main() {
             gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
         }
       `
-    }) : new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    }) : new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
 
-
-
-    // 頂点データを格納するためのオブジェクト
-    this.sphere = new THREE.Points(sphereGeometry, this.shaderMaterial);
-    //this.sphere = new THREE.Points(sphereGeometry, this.basicMaterial);
+    this.sphere = new THREE.Mesh(sphereGeometry, this.basicMaterial);
 
     this.scene.add(this.sphere);
-
-    // テクスチャに頂点データを描画
     this.bufferScene = new THREE.Scene();
     const bufferMaterial = new THREE.RawShaderMaterial({
       vertexShader: `
@@ -283,45 +186,6 @@ void main() {
     requestAnimationFrame(this.animate);
   }
 
-
-  createCustomPlaneGeometry(coordinates: number[][]): THREE.BufferGeometry {
-    const geometry = new THREE.BufferGeometry();
-    const vertices: number[] = [];
-    const uvs: number[] = [];
-    const indices: number[] = [];
-
-    // Calculate bounding box for UV mapping
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    coordinates.forEach(([x, y]) => {
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x);
-      maxY = Math.max(maxY, y);
-    });
-
-    // Create vertices and UVs
-    coordinates.forEach(([x, y]) => {
-      vertices.push(x, y, 0);
-      uvs.push(
-        (x - minX) / (maxX - minX),
-        (y - minY) / (maxY - minY)
-      );
-    });
-
-    // Create indices for triangulation
-    for (let i = 1; i < coordinates.length - 1; i++) {
-      indices.push(0, i, i + 1);
-    }
-
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-
-    return geometry;
-  }
-
-  count = 0
   animate = (time: number) => {
     requestAnimationFrame(this.animate);
 
@@ -334,20 +198,10 @@ void main() {
     if (!this.sphere) return
 
 
-    // フレームバッファへの描画
     this.renderer.setRenderTarget(this.renderTarget);
     this.renderer.render(this.bufferScene, this.camera);
-
-    if(this.count===0){
-
-      const texture = this.renderTarget.texture
-      // データを読み出す
-      const data = new Float32Array(16 * 16 * 4);
-      this.renderer.readRenderTargetPixels(this.renderTarget, 0, 0, 16, 16, data);
-      
-      console.log('data:', data);
-      this.count++
-    }
+    const data = new Float32Array(16 * 16 * 4);
+    this.renderer.readRenderTargetPixels(this.renderTarget, 0, 0, 16, 16, data);
 
     this.renderer.setRenderTarget(null);
 
