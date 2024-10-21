@@ -1,15 +1,67 @@
-import liveReload from 'vite-plugin-live-reload';
+import fs from "fs";
+import path from "path"; import liveReload from 'vite-plugin-live-reload';
 import { rm } from "node:fs/promises";
 import { loadEnv, defineConfig, UserConfigExport } from "vite";
 import { ViteEjsPlugin } from "vite-plugin-ejs";
 import { resolve } from "path";
 
 
-const inputSource = {
-  main: resolve(__dirname, "src/index.html"),
-};
+
+const assetsPath = "owns";
+const files: any = [];
+function readDirectory(dirPath) {
+  const items = fs.readdirSync(dirPath);
+  for (const item of items) {
+    const itemPath = path.join(dirPath, item);
+
+    if (fs.statSync(itemPath).isDirectory()) {
+      // componentsディレクトリを除外する
+      if (item === "components") {
+        continue;
+      }
+
+      readDirectory(itemPath);
+    } else {
+      // htmlファイル以外を除外する
+      if (path.extname(itemPath) !== ".html") {
+        continue;
+      }
+
+      // nameを決定する
+      let name;
+      if (dirPath === path.resolve(__dirname, "src")) {
+        name = path.parse(itemPath).name;
+      } else {
+        const relativePath = path.relative(
+          path.resolve(__dirname, "src"),
+          dirPath
+        );
+        const dirName = relativePath.replace(/\//g, "_");
+        name = `${dirName}_${path.parse(itemPath).name}`;
+      }
+
+      // pathを決定する
+      const relativePath = path.relative(
+        path.resolve(__dirname, "src"),
+        itemPath
+      );
+      const filePath = `/${relativePath}`;
+      (files as any).push({ name, path: filePath });
+    }
+  }
+}
+
+
+readDirectory(path.resolve(__dirname, "src"));
 
 const pageData = {};
+
+const inputFiles = {};
+for (let i = 0; i < files.length; i++) {
+  const file = files[i];
+  inputFiles[file.name] = resolve(__dirname, "./src" + file.path);
+}
+
 
 export default ({ command, mode }): UserConfigExport => {
   const CWD = process.cwd();
@@ -52,7 +104,7 @@ export default ({ command, mode }): UserConfigExport => {
           entryFileNames: `assets/js/main.js`,
           chunkFileNames: `assets/js/[name].js`,
         },
-        input: inputSource,
+        input: inputFiles,
       },
     },
 

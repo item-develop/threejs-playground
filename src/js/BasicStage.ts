@@ -8,7 +8,6 @@ import * as THREE from 'three';
 import { getVh } from './Common/utils';
 import { EffectComposer, RenderPass, UnrealBloomPass } from 'three/examples/jsm/Addons.js';
 
-
 const SceneConfig = {
   width: 100,
   height: 100,
@@ -21,7 +20,7 @@ const SceneConfig = {
 };
 
 
-export default class Stage {
+export default class BasicStage {
   renderer: THREE.WebGLRenderer | null = null;
   scene: THREE.Scene | null = null;
   camera: THREE.OrthographicCamera | null = null;
@@ -34,7 +33,12 @@ export default class Stage {
     // ... (previous constructor code remains the same)
 
     const vh = getVh(100)
-    const canvas = document.querySelector('#three-canvas') as HTMLElement;
+
+    const body = document.querySelector('body') as HTMLElement;
+    const canvas = document.createElement('canvas');
+    canvas.id = 'three-canvas';
+    body.appendChild(canvas);
+    //const canvas = document.querySelector('#three-canvas') as HTMLElement;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
 

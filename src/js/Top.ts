@@ -3,7 +3,6 @@ import "@splidejs/splide/css/skyblue";
 import "@splidejs/splide/css/sea-green";
 import "@splidejs/splide/css/core";
 import IntersectionObserverClass from "./Common/IntersectionObserverClass";
-import Stage from "./Stage";
 
 export default class Top {
   loaded: boolean;
@@ -21,7 +20,6 @@ export default class Top {
 
   onPageLoad = () => {
     this.loaded = true;
-    new Stage()
 
     setTimeout(() => {
       const options = {

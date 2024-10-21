@@ -1,7 +1,7 @@
 import Common from "./Common";
 import ScrollController from "./Common/ScrollController";
 import SmoothScroll from "./Common/SmoothScroll";
-import Stage from "./BasicStage";
+import Stage from "./VerticalLerp";
 import Top from "./Top";
 
 export const LOADING_HIDDEN = false;
