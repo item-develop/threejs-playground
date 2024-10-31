@@ -3,6 +3,11 @@ import Para from "./Common/Para";
 import { textLineSplit, textWordSplit } from "./Common/textLineSplit";
 
 
+
+export function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
 export default class Common {
   loaded: boolean;
   timer: any = 0
@@ -31,8 +36,21 @@ export default class Common {
     });
 
   };
+  prevSize = {
+    width: window.innerWidth,
+    height: window.innerHeight
+  }
 
   resize = () => {
+    const event = new Event('originalResize');
+    const isiOS = isIOS()
+    if (this.prevSize.width !== window.innerWidth || !isiOS) {
+      window.dispatchEvent(event);
+    }
+    this.prevSize = {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
     const vh = window.innerHeight * 0.01;
     document.documentElement.style.setProperty("--rvh", `${vh}px`);
     clearTimeout(this.timer)
@@ -42,6 +60,8 @@ export default class Common {
       })
     }, 100)
   }
+
+
 
   scroll = () => {
     const sct = window.scrollY

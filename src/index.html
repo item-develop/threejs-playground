@@ -4,34 +4,121 @@
 <head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>TITLE</title>
-  <meta name="description" content="DESC">
+  <title>ITEM</title>
+  <meta name="description" content="今後考えます。">
   <meta name="viewport" content="width=device-width">
   <meta name="format-detection" content="telephone=no">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="TITLE">
-  <meta property="og:description" content="DESC">
-  <meta property="og:url" content="https://static.page">
+  <meta property="og:title" content="ITEM">
+  <meta property="og:description" content="今後考えます。">
+  <meta property="og:url" content="https://item-item.com">
   <meta name="twitter:card" content="summary_large_image" />
-  <meta property="og:image" content="https://static.page/img/OGP.png">
-  <meta property="og:site_name" content="TITLE">
+  <meta property="og:image" content="https://item-item.com/img/OGP.png">
+  <meta property="og:site_name" content="ITEM">
   <meta property="og:locale" content="ja_JP">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="stylesheet" href="/scss/style.scss">
-
+  <!-- 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet"> -->
+  <script src="https://font.realtype.jp/api/script/v4" data-rt-user="5cqrmKTj4YNhRAfGhEAhQdvISDPfbrh8"></script>
+  <style>
+    .line-h {
+      position: absolute;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      height: 100%;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
 
+    .line-v {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 2px;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+
+    }
+  </style>
 </head>
 
 <body>
   <div>
-    <%- include('components/header.ejs'); %>
-      <%- include('components/main.ejs'); %>
-        <%- include('components/footer.ejs'); %>
+    <div class="line-v"></div>
+    <div class="line-h"></div>
+    <div class="works">
+      <ul>
+        <li>
+          <a href="https://recruit2024.dinii.jp/">
+            株式会社ダイニー｜RECRUIT 2024
+          </a>
+        </li>
+        <li>
+          <a href="https://www.goldwin.co.jp/ellesse">
+            ellesse - エレッセブランドサイト
+          </a>
+        </li>
+        <li>
+          <a href="https://knot-voice.jp/">
+            KNOT
+          </a>
+        </li>
+        <li>
+          <a href="https://en.butterfly-studio.jp/">
+            en Live Art Performance
+          </a>
+        </li>
+        <li>
+          <a href="https://x.com/phatosama/status/1787821967170789665">
+            リドラメノウ
+          </a>
+        </li>
+        <li>
+          <a href="https://nazoday2022.riddler.co.jp/">
+            みんなの100日謎 by RIDDLER
+          </a>
+        </li>
+        <li>
+          <a href="https://riddler.co.jp/">
+            RIDDLER（リドラ）
+          </a>
+        </li>
+        <li>
+          <a href="https://nanbo-kikaku.jp/">
+            南房企画
+          </a>
+        </li>
+        <li>
+          <a href="https://heamebungaku.jp/">
+            ヘアメ文学 | matomage
+          </a>
+        </li>
+        <li>
+          <a href="https://all-selecao-project.com/">
+            人類総セレソン計画 | 東のエデン
+          </a>
+        </li>
+        <li>
+          <a class="contact-btn" href="mailto:toi.nagasawa@item-item.com">
+            問い合わせ
+          </a>
+        </li>
+      </ul>
+    </div>
+    <canvas id="three"></canvas>
+    <%- include('components/main.ejs'); %>
   </div>
-  <script type="module" src="/js/main.ts"></script>
+  <script type="module" src="/js/index5.ts"></script>
+
+  <script>
+
+  </script>
 </body>
 
 </html>

@@ -2,7 +2,7 @@ import Common from "./Common";
 import ScrollController from "./Common/ScrollController";
 import SmoothScroll from "./Common/SmoothScroll";
 import Top from "./Top";
-import BlurStage from "./BlurStage";
+import ItemLogoStage from "./ItemLogoStage";
 
 export const LOADING_HIDDEN = false;
 window.addEventListener("DOMContentLoaded", () => {
@@ -11,8 +11,9 @@ window.addEventListener("DOMContentLoaded", () => {
   smoothScroll.init();
   new Common();
   window.addEventListener('load', () => {
-    new BlurStage()
+    new ItemLogoStage()
   })
   const top = new Top();
   top.init();
+
 });

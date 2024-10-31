@@ -1,7 +1,6 @@
 import blurFragmentShader from './glsl/blur.frag?raw'
 import * as THREE from 'three';
 import { getVh } from './Common/utils';
-import { EffectComposer, RenderPass, UnrealBloomPass } from 'three/examples/jsm/Addons.js';
 
 const SceneConfig = {
   width: 100,
@@ -153,7 +152,7 @@ export default class BlurStage {
     requestAnimationFrame(this.animate);
   }
 
-  animate = (time: number) => {
+  animate = () => {
     requestAnimationFrame(this.animate);
     if (this.material) {
       //this.material.uniforms.time.value = time * 0.001;
@@ -163,8 +162,8 @@ export default class BlurStage {
 
 
     if (false) {
-      this.renderer.setRenderTarget(null);
-      this.renderer.render(this.scene!, this.camera!);
+      //this.renderer.setRenderTarget(null);
+      //this.renderer.render(this.scene!, this.camera!);
     } else {
 
       this.renderer.setRenderTarget(this.fbo_1);

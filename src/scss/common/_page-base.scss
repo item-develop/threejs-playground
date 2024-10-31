@@ -12,8 +12,13 @@
 
 body {
   // noto sans
-  font-family: "Noto Sans JP", sans-serif;
-  font-weight: 500;
+  font-family: "A+mfCv-AXIS Font コンデンス R ProN", sans-serif;
+  font-weight: normal;
+  font-weight: 400;
+  visibility: hidden;
+  &.loaded {
+    visibility: visible;
+  }
 }
 
 .pc_only {
@@ -40,4 +45,35 @@ canvas {
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.works {
+  padding-left: 5%;
+  padding-top: 5%;
+  padding-bottom: 5%;
+  color: #cacaca;
+  position: relative;
+  z-index: 100;
+  font-size: 2vw;
+  width: 50%;
+  @include mq-sp {
+    font-size: 5vw;
+    width: 90%;
+  }
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vw;
+    @include mq-sp {
+      gap: 5vw;
+    }
+  }
+  li{
+    &:last-child{
+      margin-top: 5vw;
+    }
+  }
+  a {
+    text-decoration: underline;
+  }
 }

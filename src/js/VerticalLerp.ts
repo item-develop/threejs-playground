@@ -6,9 +6,8 @@ import "@splidejs/splide/css/core";
 import * as THREE from 'three';
 import { getVh, lerp, numToArray } from './Common/utils';
 import { createSphereGeometry } from './sphere';
-import { EffectComposer, RenderPass, UnrealBloomPass } from "three/examples/jsm/Addons.js";
+import { EffectComposer } from "three/examples/jsm/Addons.js";
 import { getWeight } from './BlurStage';
-import { wrap } from 'module';
 
 const SceneConfig = {
   width: 100,
@@ -44,13 +43,13 @@ export default class Stage {
 
   constructor() {
     const vh = getVh(100)
-    const SCREEN_WIDTH = window.innerWidth
-    const SCREEN_HEIGHT = vh
+    /* const SCREEN_WIDTH = window.innerWidth
+    const SCREEN_HEIGHT = vh */
     const TEXTURE_SIZE = 10;
-    const RESOLUTION = {
+    /* const _RESOLUTION = {
       x: SCREEN_WIDTH * 2,
       y: SCREEN_HEIGHT * 2
-    }
+    } */
 
     const body = document.querySelector('body') as HTMLElement;
     const canvas = document.createElement('canvas');
@@ -371,7 +370,7 @@ export default class Stage {
     requestAnimationFrame(this.animate);
   }
 
-  animate = (time: number) => {
+  animate = () => {
     requestAnimationFrame(this.animate);
 
     if (!this.renderer) return
@@ -411,7 +410,7 @@ export default class Stage {
       this.renderer.render(this.sphere, this.camera);
     } else {
       //this.renderer.render(this.ShapeMesh, this.camera);
-      this.renderer.render(this.textureDisplayMesh, this.camera);
+     // this.renderer.render(this.textureDisplayMesh, this.camera);
     }
 
 
