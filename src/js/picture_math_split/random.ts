@@ -140,7 +140,7 @@ export const shuffleEase = (initArray: number[], _timer: any, onChange: () => vo
 export const shuffleEasePic = (initArray: number[], onChange: () => void, count: number, indexNum: number) => {
   let _instanceIndices = initArray
   let _timer = 0 as any
-  const allRate = 60
+  const allRate = 70
   const logologo = 25
   const logo = (count % allRate) < logologo
   if (logo) {
@@ -149,12 +149,12 @@ export const shuffleEasePic = (initArray: number[], onChange: () => void, count:
     }, 100);
   } else {
     const x = ((count % allRate) - logologo) / (allRate - logologo)
-    const f = (x: number) => Math.pow(Math.sin(x * 1 * Math.PI), 4)
+    const f = (x: number) => Math.pow(Math.sin(x * 1 * Math.PI), 3)
     _instanceIndices = controlledShuffle(_instanceIndices, f(x), false)
     
     _timer = setTimeout(() => {
       onChange()
-    }, Math.max(80, (1 - f(x)) * 200));
+    }, Math.max(30, (1 - f(x)) * 200));
   }
 
   const instanceIndices = new Float32Array(
