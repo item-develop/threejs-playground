@@ -1,10 +1,9 @@
 /* import norenV from './glsl/base.vert?raw'
 import norenF from './glsl/base.frag?raw' */
 import * as THREE from 'three';
-import { getVh } from './Common/utils';
 import { EffectComposer } from 'three/examples/jsm/Addons.js';
-import ItemLogo from './ItemLogo';
-import ItemPic from './ItemPic';
+import ItemPic from './Pic';
+import { getVh } from '../Common/utils';
 
 const SceneConfig = {
   width: 100,
@@ -17,7 +16,7 @@ const SceneConfig = {
   aspectRatio: 1,
 };
 
-export default class ItemLogoStage {
+export default class Stage {
   renderer: THREE.WebGLRenderer | null = null;
   scene: THREE.Scene | null = null;
   camera: THREE.OrthographicCamera | null = null;
@@ -25,7 +24,7 @@ export default class ItemLogoStage {
   planeGeometry = new THREE.PlaneGeometry(1, 1, 1, 1);
   timer: any = 0;
   instancedMesh: THREE.InstancedMesh | null = null;
-  ItemLogo: ItemLogo | null = null
+
   ItemPic: ItemPic | null = null
   constructor() {
     // ... (previous constructor code remains the same)
@@ -60,30 +59,22 @@ export default class ItemLogoStage {
     this.camera.position.z = 5;
     const aspect = window.innerWidth / vh;
 
-    this.ItemLogo = new ItemLogo(
-      SceneConfig.sceneWidth,
-      SceneConfig.sceneHeight,
-      aspect
-    )
-
-    /*     const uTexture = new THREE.TextureLoader().load('/photo.jpg', () => {
-          this.ItemPic = new ItemPic(
-            SceneConfig.sceneWidth,
-            SceneConfig.sceneHeight,
-            aspect,
-            uTexture
-          )
-          if (this.ItemPic.instancedMesh) {
-            if (!this.scene) return
-            this.scene.add(this.ItemPic.instancedMesh);
-          }
-        }) */
+    const uTexture = new THREE.TextureLoader().load('/pic.png', () => {
+      this.ItemPic = new ItemPic(
+        SceneConfig.sceneWidth,
+        SceneConfig.sceneHeight,
+        aspect,
+        uTexture
+      )
+      if (this.ItemPic.instancedMesh) {
+        if (!this.scene) return
+        this.scene.add(this.ItemPic.instancedMesh);
+      }
+    })
 
 
 
-    if (this.ItemLogo.instancedMesh) {
-      this.scene.add(this.ItemLogo.instancedMesh);
-    }
+
 
     window.addEventListener('originalResize', this.resize);
 
@@ -94,15 +85,15 @@ export default class ItemLogoStage {
     const vh = getVh(100)
     this.renderer?.setSize(window.innerWidth, vh);
     const aspect = window.innerWidth / vh;
-    this.ItemLogo?.resize(aspect)
-    this.scene!.children[0] = this.ItemLogo?.instancedMesh!
+    /* this.ItemLogo?.resize(aspect)
+    this.scene!.children[0] = this.ItemLogo?.instancedMesh! */
 
   }
 
   render = (time: number) => {
     if (!this.renderer || !this.scene || !this.camera) return;
     requestAnimationFrame(this.render);
-    this.ItemLogo?.render(time)
+    /* this.ItemLogo?.render(time) */
     this.ItemPic?.render(time)
     this.renderer?.render(this.scene!, this.camera!);
   }
