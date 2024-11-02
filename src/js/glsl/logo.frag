@@ -1,7 +1,13 @@
 
        uniform float time;
+       uniform float uIsImage;
        varying vec2 vUv;
         varying float vIndex;
+
+
+        uniform sampler2D uTexture0;
+        uniform sampler2D uTexture1;
+        uniform sampler2D uTexture2;
 
         // vIndex = 0 表示しない
         // vIndex = 1 四角形
@@ -12,6 +18,28 @@
            // インデックスが偶数かどうかをチェック
 
           vec3 color = vec3(0.);
+
+if(uIsImage==1.){
+  vec2 uv = vUv;
+  
+  float alpha = 1.0;
+      if(vIndex == 0.0) {
+  alpha = texture2D(uTexture0, uv).a;
+            
+           }
+
+           if(vIndex == 1.0) {
+            alpha = texture2D(uTexture1, uv).a;
+            }
+
+          if(vIndex == 2.0) {
+            alpha = texture2D(uTexture2, uv).a;
+            }
+
+
+              gl_FragColor = vec4(color, alpha);
+
+}else{
 
            if(vIndex == 0.0) {
             discard;
@@ -32,6 +60,8 @@
               alpha = 1.0 - smoothstep(radius - smoothEdge, radius, dist);
               gl_FragColor = vec4(color, alpha);
             }
+}
+
 
        }
        

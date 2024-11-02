@@ -13,9 +13,9 @@
 body {
   // noto sans
   font-family: "A+mfCv-AXIS Font コンデンス R ProN", sans-serif;
-  font-weight: normal;
   font-weight: 400;
   visibility: hidden;
+  
   &.loaded {
     visibility: visible;
   }
@@ -56,8 +56,10 @@ canvas {
   z-index: 100;
   font-size: 2vw;
   width: 50%;
+  letter-spacing: 0.3vw;
   @include mq-sp {
     font-size: 5vw;
+    letter-spacing: 0.6vw;
     width: 90%;
   }
   ul {

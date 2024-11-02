@@ -2,13 +2,13 @@ const ignore = [
   /* 1, 4, 7,
   12, 15, 16,
   23, 26, 27, */
-  24, 25,
+  /* 24, */ 25,
 ]
-export const random = (len: number, exclude: number[]): number => {
+export const getRandomExclude = (len: number, exclude: number[]): number => {
   const j = Math.floor(Math.random() * len);
   const ig = ignore.includes(j)
   if (ig || exclude.includes(j)) {
-    return random(len, exclude)
+    return getRandomExclude(len, exclude)
   }
   else {
     return j
@@ -50,9 +50,9 @@ export function controlledShuffle<T>(array: T[], shuffleRate: number, yohaku = t
     } else {
       let j = 0
       if (yohaku) {
-        j = random(length, [i, ...ignore]) as number
+        j = getRandomExclude(length, [i, ...ignore]) as number
       } else {
-        j = random(length, [i]) as number
+        j = getRandomExclude(length, [i]) as number
       }
       [result[i], result[j]] = [result[j], result[i]];
     }
@@ -91,12 +91,13 @@ export function controlledShuffle2<T>(array: T[], shuffleRate: number, yohaku = 
 }
 
 import * as THREE from 'three';
+import { numToArray } from '../Common/utils';
 
 
 export const shuffleEase = (initArray: number[], _timer: any, onChange: () => void, count: number, indexNum: number, isLogo = false) => {
   let _instanceIndices = initArray
-  const allRate = 50
-  const logologo = 15
+  const allRate = 60
+  const logologo = 25
   const logo = (count % allRate) < logologo
   if (logo) {
     _timer = setTimeout(() => {
@@ -104,7 +105,7 @@ export const shuffleEase = (initArray: number[], _timer: any, onChange: () => vo
     }, 100);
   } else {
     const x = ((count % allRate) - logologo) / (allRate - logologo)
-    const f = (x: number) => Math.pow(Math.sin(x * 1 * Math.PI), 2)
+    const f = (x: number) => Math.pow(Math.sin(x * 1 * Math.PI), 4)
     /* const f2 = (x: number) => Math.pow(
       -4 * x * (x - 1)
       , 2) */
@@ -112,6 +113,13 @@ export const shuffleEase = (initArray: number[], _timer: any, onChange: () => vo
     /* if (isLogo && f(x) > 0.005) {
       _instanceIndices[_instanceIndices.length - 1] = 0
     } */
+    const randChangeNum = Math.floor(f(x) * f(x) * _instanceIndices.length)
+
+    numToArray(randChangeNum).forEach(element => {
+      const i = getRandomExclude(_instanceIndices.length, [element])
+      _instanceIndices[i] = Math.floor(Math.random() * 2.9999)
+    });
+
     _timer = setTimeout(() => {
       onChange()
     }, Math.max(80, (1 - f(x)) * 200));

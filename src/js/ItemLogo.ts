@@ -48,9 +48,16 @@ export default class ItemLogo {
 
     this.planeGeometry = new THREE.PlaneGeometry(MATH_WIDTH, MATH_HEIGHT, 1, 1);
 
+    const uTexture0 = new THREE.TextureLoader().load('/0.png');
+    const uTexture1 = new THREE.TextureLoader().load('/1.png');
+    const uTexture2 = new THREE.TextureLoader().load('/2.png');
     const material = new THREE.ShaderMaterial({
       uniforms: {
         time: { value: 0 },
+        uTexture0: { value: uTexture0 },
+        uTexture1: { value: uTexture1 },
+        uTexture2: { value: uTexture2 },
+        uIsImage: { value: 0 },
       },
       vertexShader: LogoVert,
       fragmentShader: LogoFrag,
@@ -60,7 +67,7 @@ export default class ItemLogo {
     this.material = material;
 
     const count = this.MATH_COUNT.x * this.MATH_COUNT.y;
-    this.instancedMesh = new THREE.InstancedMesh(this.planeGeometry, material, count + 1);
+    this.instancedMesh = new THREE.InstancedMesh(this.planeGeometry, material, count);
 
     const matrix = new THREE.Matrix4();
     let index = 0;
@@ -90,8 +97,8 @@ export default class ItemLogo {
       offsetY - 2 * MATH_HEIGHT,   // y方向の間隔は0.5
       0
     );
-    this.instancedMesh.setMatrixAt(index, matrix);
-    index++;
+    this.instancedMesh.setMatrixAt(24, matrix);
+
     this.instancedMesh.instanceMatrix.needsUpdate = true;
   }
 
@@ -111,8 +118,7 @@ export default class ItemLogo {
     const logoIndex = [
       2, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0,
       1, 0, 1, 1, 0, 0, 2, 0, 1, 2, 1,
-      0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1,
-      2,
+      0, 0, 2, 0, 0, 1, 1, 0, 1, 0, 1,
     ]
 
     if (this.animType === 0) {
@@ -186,7 +192,10 @@ export default class ItemLogo {
   ) {
     {
       if (!this.material) return;
+
       this.material.uniforms.time.value = time * 0.001;
+     // this.material.uniforms.uIsImage.value = Math.floor(time * 0.0010) % 4;
+
     }
   }
 }
