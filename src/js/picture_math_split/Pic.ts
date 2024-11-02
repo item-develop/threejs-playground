@@ -4,7 +4,7 @@ import * as THREE from 'three';
 
 import { EffectComposer } from 'three/examples/jsm/Addons.js';
 import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { shuffleEase, shuffleEasePic } from './random';
+import { shuffleEasePic } from './random';
 import LogoVert from '../glsl/itemPic.vert?raw';
 import LogoFrag from '../glsl/itemPic.frag?raw';
 import { numToArray } from '../Common/utils';
@@ -41,7 +41,8 @@ export default class ItemPic {
   }
   init() {
     const imgRatio = this.uTexture.source.data.naturalHeight / this.uTexture.source.data.naturalWidth
-    const WIDTH_RATE = imgRatio > 1 ? 0.3 : 0.5
+    const isSP = window.innerWidth < 767
+    const WIDTH_RATE = isSP ? 0.9 : imgRatio > 1 ? 0.3 : 0.5
     this.MATH_COUNT.y = Math.ceil(imgRatio * this.MATH_COUNT.x)
     const picWidth = this.sceneWidth * WIDTH_RATE
     const picHegiht = picWidth * imgRatio * this.aspect

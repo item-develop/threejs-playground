@@ -72,12 +72,7 @@ export default class Stage {
       }
     })
 
-
-
-
-
     window.addEventListener('originalResize', this.resize);
-
     requestAnimationFrame(this.render);
   }
 
@@ -85,8 +80,8 @@ export default class Stage {
     const vh = getVh(100)
     this.renderer?.setSize(window.innerWidth, vh);
     const aspect = window.innerWidth / vh;
-    /* this.ItemLogo?.resize(aspect)
-    this.scene!.children[0] = this.ItemLogo?.instancedMesh! */
+    this.ItemPic?.resize(aspect)
+    this.scene!.children[0] = this.ItemPic?.instancedMesh!
 
   }
 
