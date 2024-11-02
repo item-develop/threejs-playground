@@ -5,9 +5,6 @@ import { loadEnv, defineConfig, UserConfigExport } from "vite";
 import { ViteEjsPlugin } from "vite-plugin-ejs";
 import { resolve } from "path";
 
-
-
-const assetsPath = "owns";
 const files: any = [];
 function readDirectory(dirPath) {
   const items = fs.readdirSync(dirPath);
