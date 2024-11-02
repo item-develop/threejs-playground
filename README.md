@@ -1,16 +1,16 @@
-# 開発環境
+## Development Environment
 
-以下のツールとバージョンで開発を行っています。
+We use the following tools and versions for development:
 
 - Node.js: 16.20.0
 - TypeScript
-- バンドルツール: Vite 4.3.2
+- Bundler: Vite 4.3.2
 
-## セットアップ方法
+### Setup Instructions
 
-1. まず、指定のNode.jsのバージョンをインストールします。
-2. 次に、プロジェクトのルートディレクトリで`yarn`コマンドを実行し、必要なパッケージをインストールします。
+First, install the specified version of Node.js.
+Then, run the yarn command in the project root directory to install the required packages.
 
-## ビルドと出力
+### Build and Output
 
-`yarn build`コマンドを使用して、プロジェクトをビルドします。ビルドが成功すると、`output-html`フォルダに結果が出力されます。
+Use the yarn build command to build the project. When the build succeeds, the results will be output to the output-html folder.
