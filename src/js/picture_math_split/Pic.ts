@@ -20,22 +20,26 @@ export default class ItemPic {
 
   aspect: number = 1
   MATH_COUNT = {
-    x: 11,
-    y: 13
+    x: 40,
+    y: 40 // calcuclate in constructor
   }
   uTexture = new THREE.Texture()
+  stageResize: () => void
   sceneWidth: number = 3
   constructor(
     sceneWidth: number,
     _sceneHeight: number,
     aspect: number = 1,
-    uTexture: THREE.Texture
+    uTexture: THREE.Texture,
+    stageResize: () => void
   ) {
 
+    this.stageResize = stageResize
     this.uTexture = uTexture
     this.sceneWidth = sceneWidth
     this.aspect = aspect
 
+    this.initDatGUI()
     this.init()
     this.onChange()
   }
@@ -99,6 +103,7 @@ export default class ItemPic {
 
   onChange = () => {
     this.counttt++
+    console.log('1111:', 1111);
     if (this.animType === 0) {
       const { iba } = shuffleEasePic(
         numToArray(this.MATH_COUNT.x * this.MATH_COUNT.y),
@@ -121,16 +126,12 @@ export default class ItemPic {
     if (!this.gui.domElement.parentElement) return
     this.gui.domElement.parentElement.style.zIndex = "100000";
 
-    const obj = { animType: this.animType, animInterval: this.animInterval };
-    this.gui.add(obj, 'animType', 0, 2, 1).onChange(e => {
-      this.animType = e
-      clearTimeout(this.timer)
-      this.onChange()
+    const obj = { MATH_COUNT: this.MATH_COUNT.x, animInterval: this.animInterval };
+    this.gui.add(obj, 'MATH_COUNT', 0, 100, 1).onChange(e => {
+      this.MATH_COUNT.x = e
+      this.stageResize()
     }); // min, max, step
 
-    this.gui.add(obj, 'animInterval', 10, 500, 5).onChange(e => {
-      this.animInterval = e
-    }); // min, max, step
   }
 
   render(

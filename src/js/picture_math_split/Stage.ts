@@ -59,12 +59,13 @@ export default class Stage {
     this.camera.position.z = 5;
     const aspect = window.innerWidth / vh;
 
-    const uTexture = new THREE.TextureLoader().load('/pic.png', () => {
+    const uTexture = new THREE.TextureLoader().load('/pic2.png', () => {
       this.ItemPic = new ItemPic(
         SceneConfig.sceneWidth,
         SceneConfig.sceneHeight,
         aspect,
-        uTexture
+        uTexture,
+        this.resize
       )
       if (this.ItemPic.instancedMesh) {
         if (!this.scene) return
