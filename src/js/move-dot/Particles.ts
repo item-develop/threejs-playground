@@ -159,8 +159,8 @@ export class Particles {
       posArray[k + 2] = 0;
       posArray[k + 3] = 1;
 
-      velArray[k + 0] = (Math.random() - 0.5) * 2;
-      velArray[k + 1] = (Math.random() - 0.5) * 2;
+      velArray[k + 0] = (Math.random() - 0.5) * 8;
+      velArray[k + 1] = (Math.random() - 0.5) * 8;
       velArray[k + 2] = 0;
       velArray[k + 3] = 1;
     }
@@ -238,7 +238,7 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
       // You can add additional velocity updates here if needed
 
 
-      float particleRadius = 0.1;  // Should match the value in uniforms
+      float particleRadius = 0.2;  // Should match the value in uniforms
 
 
             for (float y = 0.0; y < 1.0; y += 1.0 / resolution.y) {
