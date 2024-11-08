@@ -15,7 +15,7 @@ body {
   font-family: "A+mfCv-AXIS Font コンデンス R ProN", sans-serif;
   font-weight: 400;
   visibility: hidden;
-  
+
   &.loaded {
     visibility: visible;
   }
@@ -70,12 +70,16 @@ canvas {
       gap: 5vw;
     }
   }
-  li{
-    &:last-child{
+  li {
+    &:last-child {
       margin-top: 5vw;
     }
   }
   a {
     text-decoration: underline;
   }
+}
+
+canvas {
+  //background-color: green;
 }
