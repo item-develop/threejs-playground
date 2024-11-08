@@ -12,12 +12,14 @@
 
 import * as THREE from 'three';
 import { GPUComputationRenderer, } from 'three/examples/jsm/Addons.js';
-import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh } from '../Common/utils';
 
 export class Particles {
   private WIDTH = 10;
   private PARTICLES = this.WIDTH * this.WIDTH;
+  getCanvasSize: () => {
+    width: number
+    height: number
+  }
   viewport
     : {
       x: number
@@ -26,21 +28,29 @@ export class Particles {
       x: 0,
       y: 0
     }
-  private container!: HTMLDivElement;
+
   private camera!: THREE.PerspectiveCamera;
   private geometry!: THREE.BufferGeometry;
 
-  private stats!: Stats;
+
 
   private gpuCompute!: GPUComputationRenderer;
   private velocityVariable: any;
   private positionVariable: any;
   private particleUniforms!: { [uniform: string]: THREE.IUniform };
 
+
   renderer = new THREE.WebGLRenderer();
   constructor(
-    renderer: THREE.WebGLRenderer
+    renderer: THREE.WebGLRenderer,
+    camera: THREE.PerspectiveCamera,
+    getCanvasSize: () => {
+      width: number
+      height: number
+    }
   ) {
+    this.getCanvasSize = getCanvasSize
+    this.camera = camera
     this.renderer = renderer
     this.init();
     this.animate();
@@ -58,30 +68,10 @@ export class Particles {
     width: window.innerWidth,
     height: window.innerHeight
   }
-  getCanvasSize = () => {
-    const height = getVh(100) / 1
-    const width = window.innerWidth / 1
-    return {
-      width,
-      height
-    }
-  }
+
   private init(): void {
-    this.container = document.createElement('div');
-    document.body.appendChild(this.container);
     this.canvasSize = this.getCanvasSize()
-
-
-    this.camera = new THREE.PerspectiveCamera(75, this.canvasSize.width / this.canvasSize.height, 5, 15000);
-    this.camera.position.y = 0;
-    this.camera.position.z = 2;
-
     this.viewport = this.getViewport();
-
-
-    this.stats = new Stats();
-    this.container.appendChild(this.stats.dom);
-
     this.initComputeRenderer();
     this.initParticles();
   }
@@ -155,7 +145,7 @@ export class Particles {
     const posArray = texturePosition.image.data;
     const velArray = textureVelocity.image.data;
 
-//    const particleRadius = 5.0; // Should match the value in uniforms
+    //    const particleRadius = 5.0; // Should match the value in uniforms
 
     for (let k = 0, kl = posArray.length; k < kl; k += 4) {
       let x, y;
@@ -237,11 +227,11 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
 
 
       // Check boundaries and reflect velocity
-      if (abs(pos.x) > viewport.x/2.-0.3) {
+      if (abs(pos.x) > viewport.x/4.-0.2) {
         bool isXPositive = pos.x > 0.0;
         vel.x = isXPositive ? -abs(vel.x) : abs(vel.x); 
       }
-      if (abs(pos.y) > viewport.y/2.-0.3) {
+      if (abs(pos.y) > viewport.y/2.-0.2) {
         bool isYPositive = pos.y > 0.0;
         vel.y = isYPositive ? -abs(vel.y) : abs(vel.y);
       }
@@ -306,7 +296,7 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
                 vColor = vec4( .0, 0., .0, 1.0 );
 
                 vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
-                gl_PointSize = 0.3 * cameraConstant / ( - mvPosition.z );
+                gl_PointSize = 1. * cameraConstant / ( - mvPosition.z );
 
                 vUv = uv;
 

@@ -81,7 +81,7 @@ export class Stage {
       x, y
     }
   }
-
+  cameraParticles!: THREE.PerspectiveCamera
   canvasSize = {
     width: window.innerWidth,
     height: window.innerHeight
@@ -94,17 +94,30 @@ export class Stage {
       , width
     }
   }
+  fbo1Size = () => {
+    return {
+      height: this.canvasSize.height / 2,
+      width: this.canvasSize.width * 4
+    }
+  }
   private init(): void {
     this.container = document.createElement('div');
     document.body.appendChild(this.container);
     this.canvasSize = this.getCanvasSize()
 
 
-    this.fbo_1 = new THREE.WebGLRenderTarget(this.canvasSize.width * 2, this.canvasSize.height / 5,)
 
     this.camera = new THREE.PerspectiveCamera(75, this.canvasSize.width / this.canvasSize.height, 0.1, 100);
+
     this.camera.position.y = 0;
     this.camera.position.z = 2;
+
+
+    this.fbo_1 = new THREE.WebGLRenderTarget(this.fbo1Size().width, this.fbo1Size().height,)
+    this.cameraParticles = new THREE.PerspectiveCamera(75, this.fbo1Size().width / this.fbo1Size().height, 0.1, 100);
+    this.cameraParticles.position.y = 0;
+    this.cameraParticles.position.z = 2;
+
 
     this.viewport = this.getViewport();
 
@@ -131,7 +144,11 @@ export class Stage {
     window.addEventListener('resize', () => this.onWindowResize(), false);
 
     this.particles = new Particles(
-      this.renderer
+      this.renderer,
+      this.cameraParticles,
+      () => {
+        return this.fbo1Size()
+      }
     )
 
     console.log('this.viewport.x:', this.viewport.x);
@@ -225,11 +242,11 @@ export class Stage {
 
     }
     this.renderer.setRenderTarget(this.fbo_1);
-    this.renderer.render(this.particles.particles, this.camera);
+    this.renderer.render(this.particles.particles, this.cameraParticles);
     this.renderer.setRenderTarget(null);
     this.RibonMesh.render(time)
     this.renderer.render(this.RibonMesh.scene!, this.camera);
-    //this.renderer.render(this.mesh!, this.camera);
+    //    this.renderer.render(this.mesh!, this.camera);
   }
 }
 
