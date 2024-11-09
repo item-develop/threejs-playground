@@ -159,8 +159,8 @@ export class Particles {
       posArray[k + 2] = 0;
       posArray[k + 3] = 1;
 
-      velArray[k + 0] = (Math.random() - 0.5) * 8;
-      velArray[k + 1] = (Math.random() - 0.5) * 8;
+      velArray[k + 0] = (Math.random() - 0.5) * 10;
+      velArray[k + 1] = (Math.random() - 0.5) * 10;
       velArray[k + 2] = 0;
       velArray[k + 3] = 1;
     }
@@ -227,18 +227,18 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
 
 
       // Check boundaries and reflect velocity
-      if (abs(pos.x) > viewport.x/4.-0.2) {
+      if (abs(pos.x) > viewport.x/2.) {
         bool isXPositive = pos.x > 0.0;
         vel.x = isXPositive ? -abs(vel.x) : abs(vel.x); 
       }
-      if (abs(pos.y) > viewport.y/2.-0.2) {
+      if (abs(pos.y) > viewport.y/2.) {
         bool isYPositive = pos.y > 0.0;
         vel.y = isYPositive ? -abs(vel.y) : abs(vel.y);
       }
       // You can add additional velocity updates here if needed
 
 
-      float particleRadius = 0.2;  // Should match the value in uniforms
+      float particleRadius = 0.1;  // Should match the value in uniforms
 
 
             for (float y = 0.0; y < 1.0; y += 1.0 / resolution.y) {
@@ -261,7 +261,7 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
              // Calculate improved impulse
             float restitution = 1.; // Coefficient of restitution
             float impulseMagnitude = -(1.0 + restitution) * relativeVelocityAlongNormal;
-            impulseMagnitude /= 2.0; // Assuming equal mass for both particles
+            impulseMagnitude /= 2.; // Assuming equal mass for both particles
             
             // Apply impulse
             vel += impulseMagnitude * collisionNormal;
@@ -296,7 +296,7 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
                 vColor = vec4( .0, 0., .0, 1.0 );
 
                 vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
-                gl_PointSize = 1. * cameraConstant / ( - mvPosition.z );
+                gl_PointSize = 0.5 * cameraConstant / ( - mvPosition.z );
 
                 vUv = uv;
 
