@@ -96,8 +96,8 @@ export class Stage {
   }
   fbo1Size = () => {
     return {
-      height: this.canvasSize.height,
-      width: this.canvasSize.width
+      height: this.canvasSize.height / 3,
+      width: this.canvasSize.width * 2
     }
   }
   private init(): void {
@@ -246,7 +246,7 @@ export class Stage {
     this.renderer.setRenderTarget(null);
     this.RibonMesh.render(time)
     this.renderer.render(this.RibonMesh.scene!, this.camera);
-    this.renderer.render(this.mesh!, this.camera);
+    //this.renderer.render(this.mesh!, this.camera);
   }
 }
 

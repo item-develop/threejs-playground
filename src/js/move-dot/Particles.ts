@@ -227,11 +227,11 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
 
 
       // Check boundaries and reflect velocity
-      if (abs(pos.x) > viewport.x/2.) {
+      if (abs(pos.x) > viewport.x/4.) {
         bool isXPositive = pos.x > 0.0;
         vel.x = isXPositive ? -abs(vel.x) : abs(vel.x); 
       }
-      if (abs(pos.y) > viewport.y/2.) {
+      if (abs(pos.y) > viewport.y/2.-.4) {
         bool isYPositive = pos.y > 0.0;
         vel.y = isYPositive ? -abs(vel.y) : abs(vel.y);
       }
@@ -296,7 +296,7 @@ vec2 uv = gl_FragCoord.xy / resolution.xy;
                 vColor = vec4( .0, 0., .0, 1.0 );
 
                 vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
-                gl_PointSize = 0.5 * cameraConstant / ( - mvPosition.z );
+                gl_PointSize = 0.7 * cameraConstant / ( - mvPosition.z );
 
                 vUv = uv;
 
