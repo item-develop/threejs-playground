@@ -240,7 +240,7 @@ export class Stage {
   boxRotatesMouse: number[] = []
   boxMaterial: THREE.Material[] = []
   boxRotateGsap: { rotation: { y: number } }[] = []
-  private render(_time: number): void {
+  private render(time: number): void {
 
     const canvasRate = this.canvasSize.width / this.canvasSize.height
     this.boxMeshes.forEach((box, i) => {
@@ -251,22 +251,23 @@ export class Stage {
       //+boxWidth/2の時 = PI/2
       const rotateY = (Math.PI / 2 * (xVal / (boxWidth / 2))) / 5 / (distanceY * distanceY + 0.5)
       const prevMouse = this.boxRotatesMouse[i] || 0
-
-      const lerpMouse = lerp(prevMouse, rotateY, 0.1)
+      const lerpMouse = lerp(prevMouse, rotateY, 0.1, (time - this.currentTime) / 10)
       box.rotation.y = clamp(this.boxRotateGsap[i].rotation.y + lerpMouse, -Math.PI / 2, Math.PI / 2)
-
       this.boxRotatesMouse[i] = lerpMouse
     })
 
 
     this.wheelTotalY = Math.abs(this.wheelTotalY) < 4 ? 0 : this.wheelTotalY - 4 * Math.sign(this.wheelTotalY)
-    this.cameraY = lerp(this.cameraY, this.wheelTotalY, 0.5)
+    this.cameraY = lerp(this.cameraY, this.wheelTotalY, 0.5, (time - this.currentTime) / 10)
     this.camera.position.y = this.cameraY / 10
     this.camera.lookAt(0, 0, 0)
     this.camera.updateMatrixWorld();
 
     this.renderer.render(this.scene!, this.camera)
+    this.currentTime = time
   }
+  currentTime = 0
+
   private isWebGLAvailable(): boolean {
     try {
       const canvas = document.createElement('canvas');
@@ -281,9 +282,11 @@ export class Stage {
 const clamp = (num: number, min: number, max: number) => {
   return Math.min(Math.max(num, min), max);
 }
-const roundNumber = (num: number, scale: number) => {
+/* const roundNumber = (num: number, scale: number) => {
   return Math.round(num * scale) / scale
-}
-const lerp = (start: number, end: number, amt: number) => {
-  return roundNumber((1 - amt) * start + amt * end, 100)
-}
+} */
+
+const lerp = (start: number, end: number, amt: number, delta: number) => {
+  const calc = (1 - amt * delta) * start + amt * delta * end;
+  return Math.round(calc * 100) / 100;
+};
