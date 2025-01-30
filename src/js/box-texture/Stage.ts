@@ -7,6 +7,26 @@ import gsap from 'gsap';
 const getRandom = (max: number, min: number) => {
   return Math.random() * (max - min) + min
 }
+const randomAnimate = (rotation: {
+  y: number
+}) => {
+  const max = Math.PI / 2
+  const gotoRotate = getRandom(max * 0.9, max * 0.1)
+  const current = rotation.y
+  const diff = gotoRotate - current
+  const duration = Math.abs(diff) * 2
+  gsap.to(rotation, {
+    y: gotoRotate,
+    duration: duration,
+    ease: "linear",
+    onComplete: () => {
+      randomAnimate(
+        rotation
+      )
+    }
+  })
+}
+
 const COUNT = 7
 const atsumi = 0.34
 const boxWidth = 2.2
@@ -35,6 +55,21 @@ export class Stage {
 
     this.init();
     this.addObject();
+
+    for (var i = 0; i < 7; i++) {
+      this.boxRotateGsap.push({
+        rotation:
+          { y: Math.PI / 4 }
+      }
+      )
+    }
+
+
+    this.boxRotateGsap.forEach((_box,) => {
+      randomAnimate(
+        _box.rotation
+      )
+    })
     window.requestAnimationFrame(this.animate);
   }
 
@@ -104,81 +139,49 @@ export class Stage {
     this.container.appendChild(this.renderer.domElement);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.stats = new Stats();
+
+
+    const blacktexture = new THREE.TextureLoader().load('/media_black.png')
+    const bluetexture = new THREE.TextureLoader().load('/media_blue.png')
+
+    blacktexture.colorSpace = "srgb";
+    bluetexture.colorSpace = "srgb";
+
+
+
+    this.boxMaterial = [
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // right
+      , new THREE.MeshBasicMaterial({
+        map: blacktexture
+
+      })// left
+      , new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // top
+      , new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // bottom
+      , new THREE.MeshBasicMaterial({ transparent: true, map: bluetexture }) // front
+      , new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // back
+    ]
   }
 
+  boxGeometory!: THREE.BoxGeometry
   addObject = () => {
-    /*     const geometory = new THREE.PlaneGeometry(2, 2);
-        const material = new THREE.ShaderMaterial({
-          vertexShader: baseVert,
-          fragmentShader: baseFrag,
-          uniforms: {
-            uTime: { value: 0.0 },
-            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-          }
-        })
-    
-     */
-
-    for (var i = 0; i < 7; i++) {
-      const boxGeometory = new THREE.BoxGeometry(boxWidth, atsumi, boxWidth);
-      const blacktexture = new THREE.TextureLoader().load('/media_black.png')
-      const bluetexture = new THREE.TextureLoader().load('/media_blue.png')
-
-      blacktexture.colorSpace = "srgb";
-      bluetexture.colorSpace = "srgb";
-
-      const boxMaterial = [
-        new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // right
-        , new THREE.MeshBasicMaterial({
-          map: blacktexture
-
-        })// left
-        , new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // top
-        , new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // bottom
-        , new THREE.MeshBasicMaterial({ transparent: true, map: bluetexture }) // front
-        , new THREE.MeshBasicMaterial({ transparent: true, opacity: 0 }) // back
-      ]
-      const box = new THREE.Mesh(boxGeometory, boxMaterial);
-      box.position.y = (-(Math.floor(COUNT / 2)) + i) * atsumi;
-
-      //box.rotation.y = Math.PI / 4
-      this.boxRotateGsap.push({
-        rotation:
-          { y: Math.PI / 4 }
+    console.log('123:', 123);
+    this.boxMeshes.forEach((box, _i) => {
+      if (this.scene) {
+        this.scene.remove(box)
       }
-      )
+    })
 
+
+    console.log('this.scene!.children:', this.scene!.children);
+    this.boxMeshes = []
+
+    this.boxGeometory = new THREE.BoxGeometry(boxWidth, atsumi, boxWidth);
+    for (var i = 0; i < 7; i++) {
+      const box = new THREE.Mesh(this.boxGeometory, this.boxMaterial);
+      box.position.y = (-(Math.floor(COUNT / 2)) + i) * atsumi;
       this.boxMeshes.push(box)
-      //this.scene!.add(new THREE.Mesh(geometory, material));
       this.scene!.add(box);
     }
-
-
-    const randomAnimate = (rotation: {
-      y: number
-    }) => {
-      const max = Math.PI / 2
-      const gotoRotate = getRandom(max * 0.9, max * 0.1)
-      const current = rotation.y
-      const diff = gotoRotate - current
-      const duration = Math.abs(diff) * 2
-      gsap.to(rotation, {
-        y: gotoRotate,
-        duration: duration,
-        ease: "linear",
-        onComplete: () => {
-          randomAnimate(
-            rotation
-          )
-        }
-      })
-    }
-
-    this.boxRotateGsap.forEach((_box,) => {
-      randomAnimate(
-        _box.rotation
-      )
-    })
   }
 
   boxMeshes: THREE.Mesh[] = []
@@ -205,11 +208,25 @@ export class Stage {
   }
 
   private onWindowResize(): void {
+
+    this.boxGeometory.dispose()
     this.canvasSize = this.getCanvasSize()
-    //this.camera.aspect = this.canvasSize.width / this.canvasSize.height;
+
+    const canvasRate = this.canvasSize.width / this.canvasSize.height
+    this.camera.left = -3
+    this.camera.right = 3
+    this.camera.top = 3 / canvasRate
+    this.camera.bottom = -3 / canvasRate
+
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.canvasSize.width, this.canvasSize.height);
     this.viewport = this.getViewport();
+
+    if (this.scene) {
+      this.scene!.children = []
+    }
+
+    this.addObject();
   }
 
   private animate = (time: number): void => {
@@ -221,6 +238,7 @@ export class Stage {
   cameraY = 0
   wheelTotalY = 0
   boxRotatesMouse: number[] = []
+  boxMaterial: THREE.Material[] = []
   boxRotateGsap: { rotation: { y: number } }[] = []
   private render(_time: number): void {
 
