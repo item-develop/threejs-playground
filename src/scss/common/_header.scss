@@ -11,5 +11,36 @@
 // }
 
 #component-mobile-header {
-  
+}
+
+.app-header {
+  position: fixed;
+  z-index: 100;
+  width: 10%;
+  left: 0;
+  top: 0;
+  @include pt(20);
+  @include pl(80);
+  &-logo {
+    @include w(111);
+  }
+}
+
+.side-bar {
+  position: fixed;
+  @include w(60, 10);
+  height: 100%;
+  z-index: 2;
+
+  &.left {
+    left: 0;
+  }
+  &.right {
+    right: 0;
+  }
+  img {
+    @include absCover();
+    object-fit: cover;
+    object-position: top;
+  }
 }

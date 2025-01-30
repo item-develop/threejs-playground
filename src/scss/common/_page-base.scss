@@ -82,4 +82,132 @@ canvas {
 
 canvas {
   //background-color: green;
+  pointer-events: none;
+}
+
+$blue: #01428e;
+
+.fv {
+  &-section {
+    @include vh(height, 400);
+  }
+  &-content {
+    position: sticky;
+    @include vh(height, 100);
+  }
+}
+.about {
+  &-section {
+    position: relative;
+    z-index: 2;
+    @include vh(height, 100);
+    text-align: center;
+    @include fz(32);
+    h2 {
+      @include mt(40);
+    }
+  }
+  &-head {
+    @include fz(20);
+    display: flex;
+    @include gap(20);
+    align-items: center;
+    justify-content: center;
+    color: $blue;
+    &__icon {
+      @include w(23);
+    }
+    &-2 {
+      @include fz(30);
+      @include mt(30);
+      @include ls(4);
+      color: $blue;
+    }
+  }
+  &-pic {
+    @include w(720);
+    margin-left: auto;
+    margin-right: auto;
+    @include mt(45);
+  }
+  &-list {
+    text-align: center;
+    @include fz(12);
+    @include mt(40);
+    &__list {
+      display: flex;
+      flex-direction: column;
+      @include gap(20);
+    }
+    &__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      @include gap(12);
+    }
+    &__name {
+      color: $blue;
+      line-height: 1;
+      border: 1px solid;
+      @include plr(10);
+      @include pt(3);
+      @include pb(5);
+    }
+    &__content {
+      @include fz(15);
+      line-height: 1.75;
+    }
+  }
+  &-desc {
+    @include fz(20);
+    line-height: 2;
+    @include mt(30);
+  }
+}
+
+img {
+  width: 100%;
+  display: block;
+}
+
+.scroll-atten {
+  position: fixed;
+  left: 50%;
+  transform: translate(-50%, 0%);
+  bottom: 0;
+  z-index: 100;
+  transition: opacity 0.5s;
+  opacity: 1;
+  @include enFont();
+  &__line {
+    @include h(50);
+    @include w(1);
+    background-color: black;
+    @include mt(10);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  &.hide {
+    opacity: 0;
+  }
+}
+
+/* main {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: scroll;
+  overscroll-behavior: none;
+}
+ */
+
+.beer-santa {
+  font-family: "FOT-筑紫B丸ゴシック Std R";
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "ER-Garamond";
+  src: url("/fonts/EBGaramond-Italic.ttf");
 }

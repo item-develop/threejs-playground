@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>ITEM</title>
+  <meta name="description" content="今後考えます。">
+  <meta name="viewport" content="width=device-width">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ITEM">
+  <meta property="og:description" content="今後考えます。">
+  <meta property="og:url" content="https://item-item.com">
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:image" content="https://item-item.com/img/OGP.png">
+  <meta property="og:site_name" content="ITEM">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/scss/style.scss">
+  <script src="https://webfont.fontplus.jp/accessor/script/fontplus.js?wqiKbhAUSzE%3D&box=~1tUSYKJG8U%3D&pm=1&aa=1&ab=2"></script>
+  <style>
+    .line-h {
+      position: absolute;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      height: 100%;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
+
+    .line-v {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 2px;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="beer-santa">
+    <div class="side-bar left">
+      <img src="/img/bar_left.png" alt="">
+    </div>
+
+    <div class="side-bar right">
+      <img src="/img/bar_right.png" alt="">
+    </div>
+    <div>
+      <%- include('./components/header.ejs') %>
+        <div class="h-100svh-skel"></div>
+        <div class="line-v"></div>
+        <div class="line-h"></div>
+        <canvas id="three"></canvas>
+        <div class="scroll-atten">
+          <div class="scroll-atten__txt">
+            Scroll
+          </div>
+          <div class="scroll-atten__line">
+
+          </div>
+        </div>
+        <div class="fv-section">
+          <div class="fv-content"></div>
+        </div>
+
+        <div class="about-section">
+          <h2 class="about-head">
+            <div class="about-head__icon">
+              <img src="/img/icon_tree.svg" alt="">
+            </div>
+            クリスマス特別企画
+            <div class="about-head__icon">
+              <img src="/img/icon_tree.svg" alt="">
+            </div>
+          </h2>
+          <h3 class="about-head-2">
+            サンタさんからもお願い
+            <br />セットプレゼント！
+          </h3>
+          <div class="about-pic">
+            <img src="/img/beer_pic.jpg" alt="">
+          </div>
+
+          <div class="about-list">
+            <ul class="about-list__list">
+              <li class="about-list__item">
+                <div class="about-list__name">
+                  こんな方へ
+                </div>
+                <div class="about-list__content">
+                  家族みんなで今年のクリスマスを楽しみたい方
+                </div>
+              </li>
+              <li class="about-list__item">
+                <div class="about-list__name">
+                  内容物
+                </div>
+                <div class="about-list__content">
+                  ・銀河高原ビール２本
+                  <br />・サンタさんからのお願いオーナメント（全６個）
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="about-desc">
+            銀河高原ビールと共に
+            <br />サンタさんからのお願いごとを届ける
+            <br />クリスマス限定のセットを
+            <br />抽選で５００名様にプレゼント。
+            <br />さあ、サンタさんの声に耳を傾けて
+            <br />心地よく迎えたクリスマスの日は、
+            <br />銀河高原ビールで乾杯しましょう。
+          </div>
+
+
+
+
+        </div>
+    </div>
+    <script type="module" src="/CustomEase.min.js"></script>
+    <script type="module" src="/js/shadow-map/index.ts"></script>
+  </main>
+
+</body>
+
+</html>

@@ -117,8 +117,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
 }
 
 @mixin vh($property, $size: false) {
@@ -127,4 +127,10 @@
     #{$property}: calc(var(--vh, 1vh) * #{$size});
     #{$property}: $size * 1svh;
   }
+}
+
+@mixin enFont {
+  font-family: "ER-Garamond" serif;
+  font-weight: 400;
+  font-style: italic;
 }

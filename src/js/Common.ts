@@ -65,7 +65,12 @@ export default class Common {
 
   scroll = () => {
     const sct = window.scrollY
-
+    const scrollAttension = document.querySelector('.scroll-atten')
+    if (sct > 10) {
+      scrollAttension?.classList.add('hide')
+    } else {
+      scrollAttension?.classList.remove('hide')
+    }
     this.prevSct = sct
   };
   addEvent = () => {

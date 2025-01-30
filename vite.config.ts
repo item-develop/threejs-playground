@@ -5,6 +5,12 @@ import { loadEnv, defineConfig, UserConfigExport } from "vite";
 import { ViteEjsPlugin } from "vite-plugin-ejs";
 import { resolve } from "path";
 
+// vite-glsl-plugin.js
+import { readFileSync } from 'fs';
+import { join, relative } from 'path';
+import { glslify } from 'vite-plugin-glslify'
+import glsl from 'vite-plugin-glsl';
+
 const files: any = [];
 function readDirectory(dirPath) {
   const items = fs.readdirSync(dirPath);
@@ -62,7 +68,6 @@ for (let i = 0; i < files.length; i++) {
 
 export default ({ command, mode }): UserConfigExport => {
   const CWD = process.cwd();
-  console.log("command:", command);
   const { VITE_DIST_PATH, VITE_PUBLIC_PATH } = loadEnv(mode, CWD);
   return {
     base: VITE_PUBLIC_PATH,
@@ -106,6 +111,22 @@ export default ({ command, mode }): UserConfigExport => {
     },
 
     plugins: [
+      //glslify(),
+      glsl(
+        {
+          include: [
+            '**/*.glsl', '**/*.wgsl',
+            '**/*.vert', '**/*.frag',
+            '**/*.vs', '**/*.fs'
+          ],
+          exclude: undefined,          // Glob pattern, or array of glob patterns to ignore
+          warnDuplicatedImports: true, // Warn if the same chunk was imported multiple times
+          defaultExtension: 'glsl',    // Shader suffix when no extension is specified
+          compress: false,             // Compress output shader code
+          watch: true,                 // Recompile shader on change
+          root: '/'                    // Directory for root imports
+        }
+      ),
       command == "build"
         ? {
           name: "Cleaning assets folder",

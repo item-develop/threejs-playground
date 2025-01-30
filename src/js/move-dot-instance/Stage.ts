@@ -30,7 +30,7 @@ export class Stage {
       y: 0
     }
   private container!: HTMLDivElement;
-  private camera!: THREE.PerspectiveCamera;
+  private camera!: THREE.OrthographicCamera;
   //private scene!: THREE.Scene;
   private renderer!: THREE.WebGLRenderer;
   private stats!: Stats;
@@ -75,8 +75,8 @@ export class Stage {
   }
 
   getViewport() {
-    const x = 2 * Math.tan(75 / 2 * Math.PI / 180) * this.camera.position.z * this.camera.aspect;
-    const y = 2 * Math.tan(75 / 2 * Math.PI / 180) * this.camera.position.z;
+    const x = 10
+    const y = 10 * this.canvasSize.height / this.canvasSize.width
     return {
       x, y
     }
@@ -106,7 +106,12 @@ export class Stage {
 
 
 
-    this.camera = new THREE.PerspectiveCamera(75, this.canvasSize.width / this.canvasSize.height, 0.1, 100);
+
+
+    this.camera = new THREE.OrthographicCamera(
+      -this.getViewport().x / 2, this.getViewport().x / 2,
+      this.getViewport().y / 2, -this.getViewport().y / 2,
+    )
 
     this.camera.position.y = 0;
     this.camera.position.z = 5;
@@ -118,6 +123,8 @@ export class Stage {
         alpha: true
       }
     );
+    this.renderer.shadowMap.enabled = true;
+
 
     this.renderer.setPixelRatio(
       window.innerWidth < 767 ? 4 :
@@ -133,25 +140,53 @@ export class Stage {
     //this.container.appendChild(this.stats.dom);
 
     window.addEventListener('resize', () => this.onWindowResize(), false);
+    this.scene = new THREE.Scene();
 
     this.particles = new Particles(
       this.renderer,
       this.camera,
       () => {
         return this.getCanvasSize()
-      }
+      },
+      () => {
+        return this.getViewport()
+      },
+      this.scene
     )
 
 
+    //this.scene.add(this.particles.mesh!);
+    const floorGeometory = new THREE.PlaneGeometry(
+      this.viewport.x * 10, this.viewport.y * 10, 1, 1);
+    const floorMaterial = new THREE.MeshStandardMaterial(
+      { color: 0xffffff, }
+    )
+    this.floor = new THREE.Mesh(floorGeometory, floorMaterial);
+
+    const light = new THREE.PointLight(0xffffff, 300, 100);
+    // ライトに影を有効にする
+    light.position.set(5, 5, 10);
+    light.castShadow = true;
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
+    this.floor.receiveShadow = true;
+
+    this.floor.position.z = -0.4
+    this.scene.add(light);
+    this.scene.add(this.floor)
+    const ambientLgithe = new THREE.AmbientLight(0xffffff, 2.5);
+    this.scene.add(ambientLgithe);
+
   }
 
+  floor!: THREE.Mesh
   mesh!: THREE.Mesh
   RibonMesh!: RibonMesh
+  scene!: THREE.Scene
 
 
   private onWindowResize(): void {
     this.canvasSize = this.getCanvasSize()
-    this.camera.aspect = this.canvasSize.width / this.canvasSize.height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(this.canvasSize.width, this.canvasSize.height);
     this.particles.onWindowResize()
@@ -170,7 +205,7 @@ export class Stage {
   }
   private render(time: number): void {
     this.particles.render(time)
-    this.renderer.render(this.particles.mesh!, this.camera);
+    this.renderer.render(this.scene!, this.camera);
 
   }
 }

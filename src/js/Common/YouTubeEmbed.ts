@@ -42,10 +42,10 @@ export default class YouTubeEmbed {
     this.youtubeId = youtubeId;
     // eslint-disable-next-line no-undef
     if (!this.player) {
-      this.player = new YT.Player(this.elementId, {
+      /* this.player = new (YT as any).Player(this.elementId, {
         videoId: youtubeId,
         playerVars: this.params,
-      });
+      }); */
     } else {
       this.player.loadVideoById(youtubeId);
     }

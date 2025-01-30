@@ -16,6 +16,7 @@ export default class Top {
 
   init = () => {
     window.addEventListener("load", this.onPageLoad);
+
   };
 
   onPageLoad = () => {

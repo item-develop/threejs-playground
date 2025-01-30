@@ -5,7 +5,7 @@ import { isSP } from './utils';
 export default class ScrollController {
   lenis: Lenis
   scrollY = 0
-  enable: boolean = false
+  enable: boolean = true
   constructor() {
     this.lenis = new Lenis()
     this.init()
@@ -25,7 +25,8 @@ export default class ScrollController {
         {
           autoResize: true,
           syncTouchLerp: 1,
-          lerp: 0.2
+          lerp: 0.2,
+          wrapper: document.body,
         }
       )
     }
@@ -68,6 +69,7 @@ export default class ScrollController {
       this.lenis.scrollTo(targetElm, {
         duration: 1, // Specifies animation duration in integer
         offset: offset,
+
       })
     }
   }
