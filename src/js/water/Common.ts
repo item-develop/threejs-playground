@@ -56,7 +56,7 @@ class Common {
 
     resize() {
         this.width = window.innerWidth; // document.body.clientWidth;
-        this.height = window.innerHeight;
+        this.height = window.outerHeight;
         this.aspect = this.width / this.height;
 
         if (this.renderer) this.renderer.setSize(this.width, this.height);

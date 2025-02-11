@@ -48,7 +48,7 @@ export default class Output {
                         value: 0
                     },
                     resolution: {
-                        value: new THREE.Vector2(window.innerWidth, window.innerHeight)
+                        value: new THREE.Vector2(window.innerWidth, window.outerHeight)
                     },
                     textureSize: {
                         value: new THREE.Vector2(1734, 1029)
@@ -69,8 +69,8 @@ export default class Output {
 
     render() {
         this.output.material.uniforms.uImageChange.value = clamp((document.querySelector('.fv')!.getBoundingClientRect().top as any) * -1 / (window.innerHeight / 1.5), 0, 1.5);
-        this.output.material.uniforms.resolution.value.set(window.innerWidth, window.innerHeight);
-        
+        this.output.material.uniforms.resolution.value.set(window.innerWidth, window.outerHeight);
+
         Common.renderer.setRenderTarget(null);
         Common.renderer.render(this.scene, this.camera);
     }
