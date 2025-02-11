@@ -31,8 +31,8 @@ export default class Top {
       new IntersectionObserverClass("js-watch", options);
       const optionsFast = {
         root: null,
-        rootMargin: "0px",
-        threshold: 0.2,
+        rootMargin: "0px 0px -200px 0px",
+        threshold: 0,
       };
       new IntersectionObserverClass("js-watch-fast", optionsFast);
     }, 0);
