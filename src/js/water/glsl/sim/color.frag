@@ -78,7 +78,7 @@ float maskClamped = clamp(mask, 0., 1.);
  vec3 blendedColor = mix(
         finalPic.rgb,
         finalPic.rgb * color,
-        clamp(0.5-5.*pow(len, 4.) - centerDis, 0.,1.) 
+        clamp(0.5-10.*pow(len, 4.) - centerDis, 0.,1.) 
     );
     gl_FragColor = vec4(blendedColor,  1.0);
     
