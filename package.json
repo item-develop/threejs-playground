@@ -13,6 +13,7 @@
   "devDependencies": {
     "@fullhuman/postcss-purgecss": "^5.0.0",
     "@splidejs/splide": "^4.1.4",
+    "@types/dat.gui": "^0.7.13",
     "@types/node": "^18.15.11",
     "@types/three": "^0.166.0",
     "@types/youtube": "^0.0.47",
@@ -36,6 +37,7 @@
   ],
   "dependencies": {
     "@studio-freight/lenis": "^1.0.34",
+    "dat.gui": "^0.7.9",
     "glslify": "^7.1.1",
     "gsap": "^3.12.2",
     "sweet-scroll": "^4.0.0",
