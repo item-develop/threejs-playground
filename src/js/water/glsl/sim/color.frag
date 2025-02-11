@@ -71,7 +71,7 @@ float maskClamped = clamp(mask, 0., 1.);
 
     vel = vel * 0.5 + 0.5;
     
-    vec3 color = vec3(0., 0.575098, 0.5764705882);
+    vec3 color = vec3(0., 0.595098, 0.5764705882);
 
     //color = mix(color, vec3(1.0),  10.*pow(len, 4.));
 
