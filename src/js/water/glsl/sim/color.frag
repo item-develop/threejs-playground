@@ -51,8 +51,8 @@ void main(){
 
     vec2 pic2Uv = getCoverUV(uv);
 
-    pic2Uv.y = pic2Uv.y +lenUv* 0.2*snoise(pic2Uv*300.) +lenUv*0.1;
-    pic2Uv.x = pic2Uv.x +lenUv* 0.2*snoise(pic2Uv*300.) +lenUv*0.1;
+    pic2Uv.y = pic2Uv.y +lenUv* 0.05*snoise(pic2Uv*300.) +lenUv*0.1;
+    pic2Uv.x = pic2Uv.x +lenUv* 0.05*snoise(pic2Uv*300.) +lenUv*0.1;
 
     vec4 pic = texture2D(uPic, pic2Uv);
     vec4 pic2 = texture2D(uPic2, pic2Uv);
