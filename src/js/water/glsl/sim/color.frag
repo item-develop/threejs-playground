@@ -3,9 +3,13 @@ uniform sampler2D velocity;
 uniform sampler2D uPic;
 uniform sampler2D uPic2;
 uniform float uImageChange;
+uniform float uTime;
+uniform float uMouseString;
 varying vec2 uv;
 uniform vec2 resolution;  // 画面解像度
 uniform vec2 textureSize; // テクスチャのサイズ
+uniform vec2 uMouse; // テクスチャのサイズ
+
 vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
 
 vec2 getCoverUV(vec2 uv) {
@@ -75,10 +79,21 @@ float maskClamped = clamp(mask, 0., 1.);
 
     //color = mix(color, vec3(1.0),  10.*pow(len, 4.));
 
+vec2 centerUv = uMouse;
+vec2 baseUv= uv;
+baseUv.y = baseUv.y * resolution.y / resolution.x;
+float dis = sqrt(pow(centerUv.x - baseUv.x, 2.) + pow(centerUv.y - baseUv.y, 2.));
+float disOp = clamp(0.6 - dis, 0.,1.);
+float angleFromCenter =cos(1.* atan(centerUv.y - baseUv.y, centerUv.x - baseUv.x));
+float angleNoise = snoise(vec2(
+angleFromCenter*1.4+uTime,angleFromCenter*1.4+uTime
+));
+float disSin = sin(dis*40.-uTime*5.-dis*angleNoise*1.6) + 1.;   
+
  vec3 blendedColor = mix(
         finalPic.rgb,
         finalPic.rgb * color,
-        clamp(0.5-10.*pow(len, 4.) - centerDis, 0.,1.) 
+        clamp(0.5-10.*pow(len, 4.) - centerDis + (pow(disSin, 0.7)*disOp)*.3, 0.,1.) 
     );
     gl_FragColor = vec4(blendedColor,  1.0);
     

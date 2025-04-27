@@ -17,8 +17,7 @@ export default class Webgl {
         Mouse.init();
 
         this.init();
-        this.loop();
-
+        requestAnimationFrame(this.loop.bind(this));
         window.addEventListener("resize", this.resize.bind(this));
     }
 
@@ -32,14 +31,14 @@ export default class Webgl {
         this.output.resize();
     }
 
-    render() {
+    render(t: number) {
         Mouse.update();
         Common.update();
-        this.output.update();
+        this.output.update(t);
     }
 
-    loop() {
-        this.render();
+    loop(t: number) {
+        this.render(t);
         requestAnimationFrame(this.loop.bind(this));
     }
 }

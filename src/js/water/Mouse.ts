@@ -2,7 +2,7 @@ import * as THREE from "three";
 import Common from "./Common";
 
 class Mouse {
-    diff: any;
+    diff: THREE.Vector2;
     coords: any;
     mouseMoved: boolean;
     coords_old: THREE.Vector2;
@@ -25,7 +25,6 @@ class Mouse {
 
     setCoords(x: number, y: number) {
         if (this.timer) clearTimeout(this.timer);
-        console.log('Common.height:', Common.height);
         this.coords.set((x / Common.width) * 2 - 1, - (y / Common.height) * 2 + 1);
         this.mouseMoved = true;
         this.timer = setTimeout(() => {
@@ -59,3 +58,4 @@ class Mouse {
 }
 
 export default new Mouse();
+

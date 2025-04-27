@@ -1,0 +1,310 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>ITEM</title>
+  <meta name="description" content="今後考えます。">
+  <meta name="viewport" content="width=device-width">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ITEM">
+  <meta property="og:description" content="今後考えます。">
+  <meta property="og:url" content="https://item-item.com">
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:image" content="https://item-item.com/img/OGP.png">
+  <meta property="og:site_name" content="ITEM">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/scss/style.scss">
+
+  <style>
+    .line-h {
+      position: absolute;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      height: 100%;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
+
+    .line-v {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 2px;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <div class="h-100svh-skel"></div>
+    <div class="line-v"></div>
+    <div class="line-h"></div>
+    <canvas id="three"></canvas>
+
+    <div class="words-block-area">
+
+      <div class="logo-block">
+        <div class="logo-block__txt">
+          <div class="line-wrap">
+            <span class="hidden">
+              空想からはじめよう。
+            </span>
+            <span class="line" data-text="空想からはじめよう。">
+            </span>
+          </div>
+        </div>
+
+        <div class="logo-block__logo">
+          <img src="/img/miraikuso_logo.png" alt="">
+        </div>
+      </div>
+
+      <div class="words-block words-block-1" data-delay="0.1">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+      <div class="words-block words-block-2" data-delay="0.2">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+      <div class="words-block words-block-3" data-delay="0.3">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="words-block words-block-4" data-delay="0.4">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="words-block words-block-5" data-delay="0.5">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="words-block words-block-6" data-delay="0.6">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="words-block words-block-7" data-delay="0.7">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+
+
+
+
+      <div class="words-block words-block-8" data-delay="0.8">
+        <div class="words-block__head">
+          <div class="line-wrap">
+            <span class="hidden">
+              日本の書店数、過去最多に
+            </span>
+            <span class="line" data-text="日本の書店数、過去最多に">
+            </span>
+          </div>
+          <div class="line-wrap">
+            <span class="hidden">
+              V字回復から十二年で３倍に増加
+            </span>
+            <span class="line" data-text="V字回復から十二年で３倍に増加">
+            </span>
+          </div>
+        </div>
+        <div class="words-block__name">
+          <span class="hidden">
+            内沼 晋太郎
+          </span>
+          <span class="line" data-text="内沼 晋太郎">
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+
+
+
+
+
+
+  </div>
+  <script type="module" src="/js/cloud/index.ts"></script>
+</body>
+
+</html>
