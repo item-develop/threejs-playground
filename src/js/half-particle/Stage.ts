@@ -127,6 +127,7 @@ export class Stage {
         uniform float time;
       uniform sampler2D imageTexture;
       uniform float uRandomRate;
+      uniform float uParticleRate;
       uniform vec2 uMouse;
       ${snoise}
 
@@ -157,12 +158,16 @@ export class Stage {
           vec2 testUv = gl_FragCoord.xy / resolution.xy;
           vec2 centerUv = (testUv-vec2(0.5,0.5) )* 2.;
 
-          float mouseDistance = smoothstep(0.,0.3, 
+          float _n  = (snoise(vec3(time+uv * 500.0 , 1.)) + 1.) / 2.;
+          float n  = mix( 1., _n , uParticleRate);
+
+          float mouseDistance = smoothstep(0.,0.2 + n*0.15, 
           length(centerUv - uMouse)
           );
 
-
-          vec2 add = lerpPos.xy + normalize(vec2(lerpPos.x, lerpPos.y)) * 0.0 * (1.-mouseDistance);
+        vec2 fromMouse = cord.xy - uMouse*2.;
+        
+          vec2 add = lerpPos.xy + n* normalize(fromMouse) * 0.01 * (1.-mouseDistance);
 
         gl_FragColor =  + vec4(add.x, add.y, 0., 1.0);
 
@@ -236,7 +241,7 @@ export class Stage {
   // 円軌道に乗せるための力を計算
   // 向心力 = 中心からの距離に垂直な方向への力
   vec3 normalizedDir = normalize(centerToParticle);
-  vec3 perpendicular = vec3(-normalizedDir.y*n, normalizedDir.x*n, 0.0);
+  vec3 perpendicular = vec3(-normalizedDir.y*n * 1.4, normalizedDir.x*n, 0.0);
   
   // 円運動の速さを調整するパラメータ
   float orbitSpeed = 1.9;
@@ -379,15 +384,15 @@ export class Stage {
           length(centerUv - uMouse)
           );
 
-        size *= (1.+ 1.5* mouseDistance );
+        size *= (1.+ 1.5* mouseDistance*uParticleRate );
 
 
         size = mix(0.34, size, uParticleRate);
 
 
-        bool isMabiki = mod(ceil(gl_FragCoord.x),5.) == 1. 
+        bool isMabiki = mod(ceil(gl_FragCoord.x), 4.) == 1. 
          && 
-        mod(ceil(gl_FragCoord.y),5.)==1.;
+        mod(ceil(gl_FragCoord.y), 4.)==1.;
       float alpha = 1.;
 
       if(!isMabiki){
@@ -417,9 +422,9 @@ export class Stage {
     this.positionVariable.material.uniforms['uImageRate'] = { value: 0.0 };
     this.velocityVariable.material.uniforms['uImageRate'] = { value: 0.0 };
     this.sizeVariable.material.uniforms['uImageRate'] = { value: 0.0 };
-    this.positionVariable.material.uniforms['uSinWave'] = { value: 0.0 };
-    this.velocityVariable.material.uniforms['uSinWave'] = { value: 0.0 };
-    this.sizeVariable.material.uniforms['uSinWave'] = { value: 0.0 };
+    this.positionVariable.material.uniforms['uSinWave'] = { value: 0 };
+    this.velocityVariable.material.uniforms['uSinWave'] = { value: 0 };
+    this.sizeVariable.material.uniforms['uSinWave'] = { value: 0 };
     this.positionVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
     this.velocityVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
     this.sizeVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
@@ -430,9 +435,9 @@ export class Stage {
     this.positionVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
     this.velocityVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
     this.sizeVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
-    this.positionVariable.material.uniforms['uParticleRate'] = { value: 0 };
-    this.velocityVariable.material.uniforms['uParticleRate'] = { value: 0 };
-    this.sizeVariable.material.uniforms['uParticleRate'] = { value: 0 };
+    this.positionVariable.material.uniforms['uParticleRate'] = { value: 1 };
+    this.velocityVariable.material.uniforms['uParticleRate'] = { value: 1 };
+    this.sizeVariable.material.uniforms['uParticleRate'] = { value: 1 };
 
     this.positionVariable.material.uniforms['imageTexture'] = { value: null };
     this.velocityVariable.material.uniforms['imageTexture'] = { value: null };
@@ -456,7 +461,7 @@ export class Stage {
       uSinWave: 0,
       uNoiseWave: 0,
       uParticleSizeContrust: 1,
-      uParticleRate: 0,
+      uParticleRate: 1,
     };
     this.gui!.add(myObject, 'uParticleRate')
       .min(0)
@@ -637,7 +642,7 @@ export class Stage {
         textureSize: { value: null },
         time: { value: 0.0 },
         uImageRate: { value: 0.0 },
-        uParticleRate: { value: 0 },
+        uParticleRate: { value: 1 },
         color: { value: new THREE.Color(0xffffff) },
         imageTexture: { value: this.imageTexture },
         imageTexture2: { value: this.imageTexture2 },
@@ -654,6 +659,7 @@ export class Stage {
         varying float vSize;
         varying vec3 vColor;
         varying vec2 vUv;
+        varying float vDisplay;
         
         void main() {
           // パーティクルの位置をテクスチャから取得
@@ -662,12 +668,18 @@ export class Stage {
           // パーティクルのサイズをテクスチャから取得
           vec4 sizeInfo = texture2D(textureSize, puv);
           vSize = sizeInfo.x;
+
+          if(vSize*12.<0.9){
+            vDisplay = 0.;
+            }else{
+              vDisplay=1.;
+              }
           
           // カメラに向かって常に正面を向くようにする
           vec4 mvPosition = modelViewMatrix * vec4(pos.xyz, 1.0);
           
           // サイズを適用（輝度に応じたサイズ変化）
-          gl_PointSize = vSize*12.;
+          gl_PointSize = clamp(vSize*12., 2.5, 100.0);
           
           // UV位置に基づいて色を設定（これは見た目の効果用）
           vColor = mix(
@@ -686,6 +698,7 @@ export class Stage {
 
 
       fragmentShader: `
+        varying float vDisplay;
         varying float vSize;
         varying vec3 vColor;
         varying vec2 vUv;
@@ -707,22 +720,12 @@ export class Stage {
         void main() {
           // パーティクル形状を円形に
           float dist = length(gl_PointCoord - vec2(0.5, 0.5));
-          // if (dist > 0.5 || vSize == 0.) {
-          //   discard; // 円の外側は描画しない
-          // }
-
-        bool isMabiki = mod(ceil(gl_FragCoord.x),20.)<=18. 
-         || 
-        mod(ceil(gl_FragCoord.y),20.)<=18.;
-      float mabikialpha = 1.;
-
-  if(!isMabiki){
-    //mabikialpha = 0.;
-    }
+ 
 
 
 
-          if (dist > 1.-uParticleRate*0.5 || vSize == 0.) {
+
+          if (dist > 1.-uParticleRate*0.5 || vDisplay == 0.) {
             discard; // 円の外側は描画しない
           }
 
@@ -763,8 +766,8 @@ export class Stage {
           white, imgColor, 1.-uParticleRate
           );
           //last.a = alpha * mouseDistance;
-          last.a = alpha * mabikialpha;
-          gl_FragColor = last;
+          
+          gl_FragColor = last * alpha;
            //gl_FragColor = vec4(imgColor.rgb, 1.);
         }
       `,

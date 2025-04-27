@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DotScreenPass, EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
+import { EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { getVh } from '../Common/utils';
 import baseFrag from '../glsl/cloud.frag?raw'

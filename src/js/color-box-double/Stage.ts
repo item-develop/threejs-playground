@@ -34,7 +34,7 @@ export class Stage {
 
   private mouse = new THREE.Vector2(0, 0);
   private mouseWorldPosition = new THREE.Vector3();
-  private isPulling = false;
+
   private maxPullDistance = 2.0; // 引っ張りの最大距離
 
   constructor() {
@@ -273,7 +273,7 @@ export class Stage {
     this.boxMesh.userData.backMaterial = this.backMaterial;
 
     // 軸ヘルパー
-    const axesHelper = new THREE.AxesHelper(2);
+    //    const axesHelper = new THREE.AxesHelper(2);
     //    this.scene.add(axesHelper);
     this.gui = new GUI()
 
@@ -344,9 +344,9 @@ export class Stage {
       })
     }
 
-/*     boxAnim()
-    flatAnim()
-    triAnim() */
+    /*     boxAnim()
+        flatAnim()
+        triAnim() */
 
 
 
@@ -444,19 +444,14 @@ export class Stage {
     });
 
     // マウスダウンイベント
-    window.addEventListener('mousedown', () => {
-      this.isPulling = true;
-    });
+
 
     // マウスアップイベント
-    window.addEventListener('mouseup', () => {
-      this.isPulling = false;
-    });
 
     // タッチイベントのサポート（モバイル用）
     window.addEventListener('touchstart', (event) => {
       if (event.touches.length > 0) {
-        this.isPulling = true;
+        ///this.isPulling = true;
         this.mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
         this.mouse.y = -((event.touches[0].clientY / window.innerHeight) * 2 - 1);
         this.updateMouseWorldPosition();
@@ -472,7 +467,7 @@ export class Stage {
     });
 
     window.addEventListener('touchend', () => {
-      this.isPulling = false;
+      //this.isPulling = false;
     });
   }
 
