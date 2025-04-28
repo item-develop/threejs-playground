@@ -6,9 +6,10 @@ import { getVh } from '../Common/utils';
 import { snoise } from '../Common/common';
 import { GUI } from 'lil-gui'
 import MouseMove from '../Common/MouseMove';
+import gsap from 'gsap';
 
 const CAMERA_Z = 5;
-const TEXTURE_SIZE = 800; // パーティクルのテクスチャサイズ
+const TEXTURE_SIZE = 1024; // パーティクルのテクスチャサイズ
 const PARTICLES = TEXTURE_SIZE * TEXTURE_SIZE; // パーティクル総数
 
 export class Stage {
@@ -29,6 +30,7 @@ export class Stage {
   private imageTexture2!: THREE.DataTexture;
 
   mouse: null | MouseMove = null;
+  cameraMove = false
 
   // パーティクルシステム
   private particleSystem!: THREE.Points;
@@ -161,13 +163,17 @@ export class Stage {
           float _n  = (snoise(vec3(time+uv * 500.0 , 1.)) + 1.) / 2.;
           float n  = mix( 1., _n , uParticleRate);
 
-          float mouseDistance = smoothstep(0.,0.2 + n*0.15, 
+          float mouseDistance = smoothstep(0.,0.4 + n*0.15, 
           length(centerUv - uMouse)
           );
 
-        vec2 fromMouse = cord.xy - uMouse*2.;
+
+          float mouseDis = length(uMouse);
+        vec2 fromMouse = cord.xy - uMouse *2. +  max(vec2(0.5),uMouse) *3.;
         
-          vec2 add = lerpPos.xy + n* normalize(fromMouse) * 0.01 * (1.-mouseDistance);
+          vec2 add = lerpPos.xy +  n* normalize(fromMouse) * 0.01 * (1.-mouseDistance);
+
+          
 
         gl_FragColor =  + vec4(add.x, add.y, 0., 1.0);
 
@@ -184,6 +190,7 @@ export class Stage {
       `
       uniform float time;
       uniform float uRandomRate;
+      uniform float uSpread;
       uniform sampler2D imageTexture;
       
       
@@ -206,6 +213,9 @@ export class Stage {
         vec2 cord = gridCord();
        vec3 gridVel;
        vec3 target = vec3(cord.x, cord.y, 0.0);
+
+       target.xy += uSpread* normalize(cord) * (1.+uSpread)/1. *(pow(  1. , uSpread+2. ) * 0.04*(4.*n) );
+
        vec3 direction = target - position.xyz;
         float distance = length(direction);
         if (distance > 0.001) {
@@ -244,7 +254,7 @@ export class Stage {
   vec3 perpendicular = vec3(-normalizedDir.y*n * 1.4, normalizedDir.x*n, 0.0);
   
   // 円運動の速さを調整するパラメータ
-  float orbitSpeed = 1.9;
+  float orbitSpeed = 3.9+ 2.*(abs(cord.x)+abs(cord.y));
   
   // 理想的な円軌道上の速度ベクトル
   vec3 targetVel = perpendicular * orbitSpeed;
@@ -280,6 +290,8 @@ export class Stage {
       uniform float uSinWave;
       uniform float uNoiseWave;
       uniform float uParticleRate;
+      uniform float uGridBetween;
+      uniform float uRandomScale;
       uniform float uParticleSizeContrust;
       uniform vec2 uMouse;
 
@@ -375,6 +387,7 @@ export class Stage {
         // size += uNoiseWave * snoise(vec2(time/5.) + 0.4*vec2(position.x*sin(position.y),position.y*cos(position.x)));
 
         size *= (1.+  uNoiseWave * snoise(vec2(time/5.) + 0.4*vec2(position.x*sin(position.y),position.y*cos(position.x))));
+        size *= (1.+ uRandomScale*snoise( 1000.*uv + vec2(time/1.)));
 
 
           vec2 testUv = gl_FragCoord.xy / resolution.xy;
@@ -390,14 +403,19 @@ export class Stage {
         size = mix(0.34, size, uParticleRate);
 
 
-        bool isMabiki = mod(ceil(gl_FragCoord.x), 4.) == 1. 
+        bool isMabiki = mod(ceil(gl_FragCoord.x), uGridBetween) == 1. 
          && 
-        mod(ceil(gl_FragCoord.y), 4.)==1.;
+        mod(ceil(gl_FragCoord.y), uGridBetween)==1.;
       float alpha = 1.;
 
-      if(!isMabiki){
-   size *= 1. - uParticleRate;
+      if(!isMabiki   ){
+   size *= 1. - ( 
+   smoothstep( 1. - uParticleRate*1.1,  1.-uParticleRate*1.1 + 0.1,  uv.x)
+   +
+   smoothstep(0.,0.5,mouseDistance)
+   );
       }
+   
 
 
         gl_FragColor = vec4(size, size, size, 1.0);
@@ -425,12 +443,19 @@ export class Stage {
     this.positionVariable.material.uniforms['uSinWave'] = { value: 0 };
     this.velocityVariable.material.uniforms['uSinWave'] = { value: 0 };
     this.sizeVariable.material.uniforms['uSinWave'] = { value: 0 };
+    this.positionVariable.material.uniforms['uRandomScale'] = { value: 0 };
+    this.velocityVariable.material.uniforms['uRandomScale'] = { value: 0 };
+    this.sizeVariable.material.uniforms['uRandomScale'] = { value: 0 };
     this.positionVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
     this.velocityVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
     this.sizeVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
-    this.positionVariable.material.uniforms['uRandomRate'] = { value: 0.0 };
-    this.velocityVariable.material.uniforms['uRandomRate'] = { value: 0.0 };
-    this.sizeVariable.material.uniforms['uRandomRate'] = { value: 0.0 };
+    this.positionVariable.material.uniforms['uRandomRate'] = { value: 1.0 };
+    this.velocityVariable.material.uniforms['uRandomRate'] = { value: 1.0 };
+    this.sizeVariable.material.uniforms['uRandomRate'] = { value: 1.0 };
+
+    this.positionVariable.material.uniforms['uSpread'] = { value: 0.0 };
+    this.velocityVariable.material.uniforms['uSpread'] = { value: 0.0 };
+    this.sizeVariable.material.uniforms['uSpread'] = { value: 0.0 };
 
     this.positionVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
     this.velocityVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
@@ -438,6 +463,9 @@ export class Stage {
     this.positionVariable.material.uniforms['uParticleRate'] = { value: 1 };
     this.velocityVariable.material.uniforms['uParticleRate'] = { value: 1 };
     this.sizeVariable.material.uniforms['uParticleRate'] = { value: 1 };
+    this.positionVariable.material.uniforms['uGridBetween'] = { value: 4 };
+    this.velocityVariable.material.uniforms['uGridBetween'] = { value: 4 };
+    this.sizeVariable.material.uniforms['uGridBetween'] = { value: 4 };
 
     this.positionVariable.material.uniforms['imageTexture'] = { value: null };
     this.velocityVariable.material.uniforms['imageTexture'] = { value: null };
@@ -457,12 +485,23 @@ export class Stage {
 
     const myObject = {
       uImageRate: 0,
-      uRandomRate: 0,
+      uRandomRate: 1,
       uSinWave: 0,
+      uRandomScale: 0,
       uNoiseWave: 0,
       uParticleSizeContrust: 1,
       uParticleRate: 1,
+      uSpread: 0,
+      uGridBetween: 4,
+      cameraMove: this.cameraMove
     };
+
+    console.log('location.search:', location.search);
+    const paramIsAnim = location.search.indexOf('anim') !== -1;
+    if (paramIsAnim) {
+      this.animStart(myObject)
+    }
+
     this.gui!.add(myObject, 'uParticleRate')
       .min(0)
       .max(1)
@@ -521,6 +560,39 @@ export class Stage {
         this.velocityVariable.material.uniforms['uNoiseWave'].value = value;
         this.sizeVariable.material.uniforms['uNoiseWave'].value = value;
       });
+    this.gui!.add(myObject, 'uRandomScale')
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .onChange((value: number) => {
+        this.positionVariable.material.uniforms['uRandomScale'].value = value;
+        this.velocityVariable.material.uniforms['uRandomScale'].value = value;
+        this.sizeVariable.material.uniforms['uRandomScale'].value = value;
+      });
+
+
+    this.gui!.add(myObject, 'uGridBetween')
+      .min(2)
+      .max(10)
+      .step(1)
+      .onChange((value: number) => {
+        this.positionVariable.material.uniforms['uGridBetween'].value = value;
+        this.velocityVariable.material.uniforms['uGridBetween'].value = value;
+        this.sizeVariable.material.uniforms['uGridBetween'].value = value;
+      });
+
+    this.gui!.add(myObject, 'uSpread')
+      .min(0)
+      .max(1)
+      .step(0.01)
+      .onChange((value: number) => {
+        this.positionVariable.material.uniforms['uSpread'].value = value;
+        this.velocityVariable.material.uniforms['uSpread'].value = value;
+        this.sizeVariable.material.uniforms['uSpread'].value = value;
+      });
+    this.gui!.add(myObject, 'cameraMove').onChange((value: boolean) => {
+      this.cameraMove = value;
+    })
 
 
     // GPUComputationRendererの初期化
@@ -669,7 +741,7 @@ export class Stage {
           vec4 sizeInfo = texture2D(textureSize, puv);
           vSize = sizeInfo.x;
 
-          if(vSize*12.<0.9){
+          if(vSize*12.<0.2){
             vDisplay = 0.;
             }else{
               vDisplay=1.;
@@ -679,7 +751,7 @@ export class Stage {
           vec4 mvPosition = modelViewMatrix * vec4(pos.xyz, 1.0);
           
           // サイズを適用（輝度に応じたサイズ変化）
-          gl_PointSize = clamp(vSize*12., 2.5, 100.0);
+          gl_PointSize = clamp(vSize*12., 1., 100.0);
           
           // UV位置に基づいて色を設定（これは見た目の効果用）
           vColor = mix(
@@ -759,7 +831,7 @@ export class Stage {
 
           
           vec4 white=  vec4(
-          vec3(1.), 1.);
+          vec3(pow(uParticleRate,6.)), uParticleRate);
 
 
           vec4 last = mix(
@@ -875,11 +947,89 @@ export class Stage {
     this.render(time);
     this.stats.update();
 
+    this.camera.position.x = !this.cameraMove ? 0 : this.mouse.lerpMouse.x * 0.5;
+    this.camera.position.y = !this.cameraMove ? 0 : -this.mouse.lerpMouse.y * 0.5;
+    this.camera.lookAt(0, 0, 0);
     requestAnimationFrame(this.animate);
   }
 
   private render(_time: number): void {
     this.renderer.render(this.scene!, this.camera);
+  }
+
+  animStart = (myObject: any) => {
+    const to = {
+      value: myObject.uParticleRate
+    }
+    gsap.to(
+      to
+      , {
+        value: 0,
+        delay: 3.8,
+        duration: 2.5,
+        ease: "power4.out",
+        onUpdate: (v) => {
+          this.positionVariable.material.uniforms['uParticleRate'].value = to.value;
+          this.velocityVariable.material.uniforms['uParticleRate'].value = to.value;
+          this.sizeVariable.material.uniforms['uParticleRate'].value = to.value;
+          this.particleUniforms['uParticleRate'].value = to.value;
+        }
+      })
+
+    const to2 = {
+      value: myObject.uRandomRate
+    }
+
+    gsap.to(
+      to2
+      , {
+        value: 0,
+        duration: 2,
+        delay: 1,
+        onUpdate: (v) => {
+          this.positionVariable.material.uniforms['uRandomRate'].value = to2.value;
+          this.velocityVariable.material.uniforms['uRandomRate'].value = to2.value;
+          this.sizeVariable.material.uniforms['uRandomRate'].value = to2.value;
+
+        }
+      })
+
+    const to3 = {
+      value: myObject.uSpread
+    }
+    gsap.to(
+      to3
+      , {
+        value: 2,
+        duration: 1,
+        delay: 2.5,
+        ease: "power2.inOut",
+        onComplete: () => {
+          gsap.to(
+            to3
+            , {
+              value: 0,
+              duration: 1,
+              delay: 0,
+              ease: "power2.inOut",
+              onComplete: () => {
+              },
+              onUpdate: (v) => {
+                this.positionVariable.material.uniforms["uSpread"].value = to3.value;
+                this.velocityVariable.material.uniforms["uSpread"].value = to3.value;
+                this.sizeVariable.material.uniforms["uSpread"].value = to3.value;
+              }
+            })
+        },
+        onUpdate: (v) => {
+          this.positionVariable.material.uniforms["uSpread"].value = to3.value;
+          this.velocityVariable.material.uniforms["uSpread"].value = to3.value;
+          this.sizeVariable.material.uniforms["uSpread"].value = to3.value;
+
+        }
+      })
+
+
   }
 
   private isWebGLAvailable(): boolean {

@@ -7,15 +7,6 @@ float lerp(float start, float end, float t) {
   return start + t * (end - start);
 }
 
-vec2 gridCord(  ) {
-      float w = 4.;
-      float rate = w/resolution.x;
-      vec2 cord = (vec2(
-       gl_FragCoord.x, gl_FragCoord.y
-       ) - resolution/2.) * rate;
-      return cord;
-}
-
 
 
 
@@ -185,6 +176,19 @@ vec3 halftone(vec3 texcolor, vec2 st, float frequency) {
 vec3 halftone(vec3 texcolor, vec2 st) {
   return halftone(texcolor, st, 30.0);
 }
+
+
+/* vec2 gridCord(  ) {
+      float w = 4.;
+      float rate = w/resolution.x;
+      vec2 cord = (vec2(
+       gl_FragCoord.x, gl_FragCoord.y
+       ) - resolution/2.) * rate;
+        //cord.y += 1. * snoise(cord * 0.11) ;
+      return cord;
+}
+
+ */
 
 
 `
