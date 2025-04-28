@@ -56,7 +56,7 @@ export class Stage {
     this.scene.background = new THREE.Color(0xffffff);
     const aspect = window.innerWidth / getVh(100);
     this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-    const posbase = 2
+    const posbase = 3
     this.camera.position.set(posbase, posbase * 1.5, posbase);
     this.camera.lookAt(0, 0, 0);
 
@@ -344,10 +344,10 @@ export class Stage {
       })
     }
 
-    /*     boxAnim()
-        flatAnim()
-        triAnim() */
-
+/*     boxAnim()
+    flatAnim()
+    triAnim()
+ */
 
 
     this.gui!.add(myObject, 'uBox')

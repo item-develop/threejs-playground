@@ -254,7 +254,7 @@ export class Stage {
   vec3 perpendicular = vec3(-normalizedDir.y*n * 1.4, normalizedDir.x*n, 0.0);
   
   // 円運動の速さを調整するパラメータ
-  float orbitSpeed = 3.9+ 2.*(abs(cord.x)+abs(cord.y));
+  float orbitSpeed = 1.3+ 2.*(abs(cord.x)+abs(cord.y));
   
   // 理想的な円軌道上の速度ベクトル
   vec3 targetVel = perpendicular * orbitSpeed;
@@ -968,7 +968,7 @@ export class Stage {
         delay: 3.8,
         duration: 2.5,
         ease: "power4.out",
-        onUpdate: (v) => {
+        onUpdate: () => {
           this.positionVariable.material.uniforms['uParticleRate'].value = to.value;
           this.velocityVariable.material.uniforms['uParticleRate'].value = to.value;
           this.sizeVariable.material.uniforms['uParticleRate'].value = to.value;
@@ -986,7 +986,7 @@ export class Stage {
         value: 0,
         duration: 2,
         delay: 1,
-        onUpdate: (v) => {
+        onUpdate: () => {
           this.positionVariable.material.uniforms['uRandomRate'].value = to2.value;
           this.velocityVariable.material.uniforms['uRandomRate'].value = to2.value;
           this.sizeVariable.material.uniforms['uRandomRate'].value = to2.value;
@@ -1014,14 +1014,14 @@ export class Stage {
               ease: "power2.inOut",
               onComplete: () => {
               },
-              onUpdate: (v) => {
+              onUpdate: () => {
                 this.positionVariable.material.uniforms["uSpread"].value = to3.value;
                 this.velocityVariable.material.uniforms["uSpread"].value = to3.value;
                 this.sizeVariable.material.uniforms["uSpread"].value = to3.value;
               }
             })
         },
-        onUpdate: (v) => {
+        onUpdate: () => {
           this.positionVariable.material.uniforms["uSpread"].value = to3.value;
           this.velocityVariable.material.uniforms["uSpread"].value = to3.value;
           this.sizeVariable.material.uniforms["uSpread"].value = to3.value;
