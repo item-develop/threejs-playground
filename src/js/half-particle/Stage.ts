@@ -409,11 +409,19 @@ export class Stage {
       float alpha = 1.;
 
       if(!isMabiki   ){
-   size *= 1. - ( 
+   /* size *= 1. - ( 
    smoothstep( 1. - uParticleRate*1.1,  1.-uParticleRate*1.1 + 0.1,  uv.x)
    +
    smoothstep(0.,0.5,mouseDistance)
-   );
+   ); */
+
+   size *= 1. - ( 
+   uParticleRate
+   +
+   smoothstep(0.,0.5,mouseDistance)
+   ); 
+
+
       }
    
 
@@ -440,32 +448,32 @@ export class Stage {
     this.positionVariable.material.uniforms['uImageRate'] = { value: 0.0 };
     this.velocityVariable.material.uniforms['uImageRate'] = { value: 0.0 };
     this.sizeVariable.material.uniforms['uImageRate'] = { value: 0.0 };
-    this.positionVariable.material.uniforms['uSinWave'] = { value: 0 };
-    this.velocityVariable.material.uniforms['uSinWave'] = { value: 0 };
-    this.sizeVariable.material.uniforms['uSinWave'] = { value: 0 };
+    this.positionVariable.material.uniforms['uSinWave'] = { value: 0.4 };
+    this.velocityVariable.material.uniforms['uSinWave'] = { value: 0.4 };
+    this.sizeVariable.material.uniforms['uSinWave'] = { value: 0.4 };
     this.positionVariable.material.uniforms['uRandomScale'] = { value: 0 };
     this.velocityVariable.material.uniforms['uRandomScale'] = { value: 0 };
     this.sizeVariable.material.uniforms['uRandomScale'] = { value: 0 };
-    this.positionVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
-    this.velocityVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
-    this.sizeVariable.material.uniforms['uNoiseWave'] = { value: 0.0 };
-    this.positionVariable.material.uniforms['uRandomRate'] = { value: 1.0 };
-    this.velocityVariable.material.uniforms['uRandomRate'] = { value: 1.0 };
-    this.sizeVariable.material.uniforms['uRandomRate'] = { value: 1.0 };
+    this.positionVariable.material.uniforms['uNoiseWave'] = { value: 0.8 };
+    this.velocityVariable.material.uniforms['uNoiseWave'] = { value: 0.8 };
+    this.sizeVariable.material.uniforms['uNoiseWave'] = { value: 0.8 };
+    this.positionVariable.material.uniforms['uRandomRate'] = { value: 0 };
+    this.velocityVariable.material.uniforms['uRandomRate'] = { value: 0 };
+    this.sizeVariable.material.uniforms['uRandomRate'] = { value: 0 };
 
     this.positionVariable.material.uniforms['uSpread'] = { value: 0.0 };
     this.velocityVariable.material.uniforms['uSpread'] = { value: 0.0 };
     this.sizeVariable.material.uniforms['uSpread'] = { value: 0.0 };
 
-    this.positionVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
-    this.velocityVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
-    this.sizeVariable.material.uniforms['uParticleSizeContrust'] = { value: 1.0 };
+    this.positionVariable.material.uniforms['uParticleSizeContrust'] = { value: 0 };
+    this.velocityVariable.material.uniforms['uParticleSizeContrust'] = { value: 0 };
+    this.sizeVariable.material.uniforms['uParticleSizeContrust'] = { value: 0 };
     this.positionVariable.material.uniforms['uParticleRate'] = { value: 1 };
     this.velocityVariable.material.uniforms['uParticleRate'] = { value: 1 };
     this.sizeVariable.material.uniforms['uParticleRate'] = { value: 1 };
-    this.positionVariable.material.uniforms['uGridBetween'] = { value: 4 };
-    this.velocityVariable.material.uniforms['uGridBetween'] = { value: 4 };
-    this.sizeVariable.material.uniforms['uGridBetween'] = { value: 4 };
+    this.positionVariable.material.uniforms['uGridBetween'] = { value: 6 };
+    this.velocityVariable.material.uniforms['uGridBetween'] = { value: 6 };
+    this.sizeVariable.material.uniforms['uGridBetween'] = { value: 6 };
 
     this.positionVariable.material.uniforms['imageTexture'] = { value: null };
     this.velocityVariable.material.uniforms['imageTexture'] = { value: null };
@@ -485,23 +493,115 @@ export class Stage {
 
     const myObject = {
       uImageRate: 0,
-      uRandomRate: 1,
+      uRandomRate: 0,
       uSinWave: 0,
       uRandomScale: 0,
       uNoiseWave: 0,
-      uParticleSizeContrust: 1,
+      uParticleSizeContrust: 0,
       uParticleRate: 1,
       uSpread: 0,
-      uGridBetween: 4,
+      uGridBetween: 6,
       cameraMove: this.cameraMove
     };
 
     console.log('location.search:', location.search);
     const paramIsAnim = location.search.indexOf('anim') !== -1;
+    const hover = location.search.indexOf('hover') !== -1;
     if (paramIsAnim) {
       this.animStart(myObject)
     }
 
+    if (hover) {
+      document.querySelector('.menu-list')?.classList.add('hover');
+    }
+    document.querySelectorAll('.menu-item').forEach((item) => {
+      item.addEventListener('mouseover', () => {
+        const to3 = {
+          value: myObject.uSpread
+        }
+        gsap.to(
+          to3
+          , {
+            value: 2,
+            duration: 0.04,
+            delay: 0,
+            ease: "power4.out",
+            onComplete: () => {
+              gsap.to(
+                to3
+                , {
+                  value: 0,
+                  duration: 0.5,
+                  delay: 0,
+                  ease: "power4.inOut",
+                  onComplete: () => {
+                  },
+                  onUpdate: () => {
+                    this.positionVariable.material.uniforms["uSpread"].value = to3.value;
+                    this.velocityVariable.material.uniforms["uSpread"].value = to3.value;
+                    this.sizeVariable.material.uniforms["uSpread"].value = to3.value;
+                  }
+                })
+            },
+            onUpdate: () => {
+              this.positionVariable.material.uniforms["uSpread"].value = to3.value;
+              this.velocityVariable.material.uniforms["uSpread"].value = to3.value;
+              this.sizeVariable.material.uniforms["uSpread"].value = to3.value;
+
+            }
+          })
+
+
+        const to2 = {
+          value: 0
+        }
+
+        gsap.to(
+          to2
+          , {
+            value: 1,
+            duration: 1,
+            delay: 0,
+            onUpdate: () => {
+              this.positionVariable.material.uniforms['uParticleSizeContrust'].value = to2.value;
+              this.velocityVariable.material.uniforms['uParticleSizeContrust'].value = to2.value;
+              this.sizeVariable.material.uniforms['uParticleSizeContrust'].value = to2.value;
+            }
+          })
+
+
+
+      })
+
+
+
+      item.addEventListener("mouseleave", () => {
+
+
+
+        const to2 = {
+          value: 1
+        }
+
+        gsap.to(
+          to2
+          , {
+            value: 0,
+            duration: 1,
+            delay: 0,
+            onUpdate: () => {
+              this.positionVariable.material.uniforms['uParticleSizeContrust'].value = to2.value;
+              this.velocityVariable.material.uniforms['uParticleSizeContrust'].value = to2.value;
+              this.sizeVariable.material.uniforms['uParticleSizeContrust'].value = to2.value;
+            }
+          })
+
+
+
+      })
+
+
+    })
     this.gui!.add(myObject, 'uParticleRate')
       .min(0)
       .max(1)
@@ -831,7 +931,7 @@ export class Stage {
 
           
           vec4 white=  vec4(
-          vec3(pow(uParticleRate,6.)), uParticleRate);
+          vec3(pow(uParticleRate - 0., 2.)), uParticleRate);
 
 
           vec4 last = mix(
@@ -936,7 +1036,7 @@ export class Stage {
 
 
     this.gpuCompute.compute();
-
+    console.log('this.positionVariable.material.uniforms[:', this.positionVariable.material.uniforms['uParticleSizeContrust']);
     // パーティクルマテリアルのユニフォームを更新
     this.particleUniforms['texturePosition'].value = this.gpuCompute.getCurrentRenderTarget(this.positionVariable).texture;
     this.particleUniforms['textureSize'].value = this.gpuCompute.getCurrentRenderTarget(this.sizeVariable).texture;
