@@ -7,6 +7,7 @@ import { snoise } from '../Common/common';
 import { GUI } from 'lil-gui'
 import MouseMove from '../Common/MouseMove';
 import gsap from 'gsap';
+import { TextureUI } from './TextureUI';
 
 const CAMERA_Z = 5;
 const TEXTURE_SIZE = 1024; // パーティクルのテクスチャサイズ
@@ -284,7 +285,9 @@ export class Stage {
       `
       uniform float time;
       uniform sampler2D imageTexture;
+      uniform vec2 imageTextureResolution;
       uniform sampler2D imageTexture2;
+      uniform vec2 imageTexture2Resolution;
       uniform float uRandomRate;
       uniform float uImageRate;
       uniform float uSinWave;
@@ -354,13 +357,20 @@ export class Stage {
         uv.y = (uv.y-0.5)*1.4 + 0.5;
 
 
+        vec2 uv1 = uv;
+          vec2 uv2 = uv;
+          uv1.y = (uv2.y - 0.5) / 1.4 + 0.5;
+          uv2.y = (uv2.y - 0.5) / 1.4 + 0.5;
+          uv1.y = (uv1.y-0.5)*(imageTextureResolution.x/imageTextureResolution.y) + 0.5;
+          uv2.y = (uv2.y-0.5)*(imageTexture2Resolution.x/imageTexture2Resolution.y) + 0.5;
+
 
         float imgSize1 = txtSample(
-        imageTexture, uv
+        imageTexture, uv1
         );
         
         float imgSize2 = txtSample(
-        imageTexture2, uv
+        imageTexture2, uv2
         );
 
 
@@ -465,9 +475,9 @@ export class Stage {
     this.velocityVariable.material.uniforms['uSpread'] = { value: 0.0 };
     this.sizeVariable.material.uniforms['uSpread'] = { value: 0.0 };
 
-    this.positionVariable.material.uniforms['uParticleSizeContrust'] = { value: 0 };
-    this.velocityVariable.material.uniforms['uParticleSizeContrust'] = { value: 0 };
-    this.sizeVariable.material.uniforms['uParticleSizeContrust'] = { value: 0 };
+    this.positionVariable.material.uniforms['uParticleSizeContrust'] = { value: 1 };
+    this.velocityVariable.material.uniforms['uParticleSizeContrust'] = { value: 1 };
+    this.sizeVariable.material.uniforms['uParticleSizeContrust'] = { value: 1 };
     this.positionVariable.material.uniforms['uParticleRate'] = { value: 1 };
     this.velocityVariable.material.uniforms['uParticleRate'] = { value: 1 };
     this.sizeVariable.material.uniforms['uParticleRate'] = { value: 1 };
@@ -478,10 +488,17 @@ export class Stage {
     this.positionVariable.material.uniforms['imageTexture'] = { value: null };
     this.velocityVariable.material.uniforms['imageTexture'] = { value: null };
     this.sizeVariable.material.uniforms['imageTexture'] = { value: null };
+    this.positionVariable.material.uniforms['imageTextureResolution'] = { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) };
+    this.velocityVariable.material.uniforms['imageTextureResolution'] = { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) };
+    this.sizeVariable.material.uniforms['imageTextureResolution'] = { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) };
 
     this.positionVariable.material.uniforms['imageTexture2'] = { value: null };
     this.velocityVariable.material.uniforms['imageTexture2'] = { value: null };
     this.sizeVariable.material.uniforms['imageTexture2'] = { value: null };
+    this.positionVariable.material.uniforms['imageTexture2Resolution'] = { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) };
+    this.velocityVariable.material.uniforms['imageTexture2Resolution'] = { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) };
+    this.sizeVariable.material.uniforms['imageTexture2Resolution'] = { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) };
+
 
     this.positionVariable.material.uniforms['uMouse'] = { value: new THREE.Vector2(0, 0) };
     this.velocityVariable.material.uniforms['uMouse'] = { value: new THREE.Vector2(0, 0) };
@@ -491,13 +508,22 @@ export class Stage {
 
     this.gui = new GUI()
 
+    // Setup texture UI
+    this.textureUI = new TextureUI(this.gui, (texture, index) => {
+      if (index === 1) {
+        this.imageTexture = texture;
+      } else {
+        this.imageTexture2 = texture;
+      }
+    });
+
     const myObject = {
       uImageRate: 0,
       uRandomRate: 0,
       uSinWave: 0,
       uRandomScale: 0,
-      uNoiseWave: 0,
-      uParticleSizeContrust: 0,
+      uNoiseWave: 0.8,
+      uParticleSizeContrust: 1,
       uParticleRate: 1,
       uSpread: 0,
       uGridBetween: 6,
@@ -817,7 +843,9 @@ export class Stage {
         uParticleRate: { value: 1 },
         color: { value: new THREE.Color(0xffffff) },
         imageTexture: { value: this.imageTexture },
+        imageTextureResolution: { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) },
         imageTexture2: { value: this.imageTexture2 },
+        imageTexture2Resolution: { value: new THREE.Vector2(TEXTURE_SIZE, TEXTURE_SIZE) },
         resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
         uMouse: { value: new THREE.Vector2(0, 0) },
       },
@@ -875,7 +903,11 @@ export class Stage {
         varying vec3 vColor;
         varying vec2 vUv;
         uniform sampler2D imageTexture;
+        uniform vec2 imageTextureResolution;
         uniform sampler2D imageTexture2;
+        uniform vec2 imageTexture2Resolution;
+
+
         uniform vec2 resolution;
         uniform vec2 uMouse;
         uniform float uParticleRate;
@@ -909,6 +941,14 @@ export class Stage {
           
           uv.y = (uv.y-0.5)*1.4 + 0.5;
           
+          vec2 uv1 = uv;
+          vec2 uv2 = uv;
+          uv1.y = (uv2.y - 0.5) / 1.4 + 0.5;
+          uv2.y = (uv2.y - 0.5) / 1.4 + 0.5;
+          uv1.y = (uv1.y-0.5)*(imageTextureResolution.x/imageTextureResolution.y) + 0.5;
+          uv2.y = (uv2.y-0.5)*(imageTexture2Resolution.x/imageTexture2Resolution.y) + 0.5;
+
+          
           vec2 centerUv = (vUv-vec2(0.5,0.5) )* 2.;
           float mouseDistance = smoothstep(0.,0.1, 
           length(centerUv - uMouse)
@@ -923,7 +963,7 @@ export class Stage {
         alpha= 0.;
         }
 
-          vec4 imgColor1 = texture2D(imageTexture, uv);
+          vec4 imgColor1 = texture2D(imageTexture, uv1);
           vec4 imgColor2 = texture2D(imageTexture2, uv);
           vec4 imgColor = mix(
           imgColor1,imgColor2,uImageRate
@@ -961,6 +1001,7 @@ export class Stage {
 
   }
   gui: GUI | null = null;
+  textureUI: TextureUI | null = null;
 
   effectComposer: EffectComposer | null = null;
 
@@ -1017,9 +1058,17 @@ export class Stage {
     this.velocityVariable.material.uniforms['imageTexture'].value = this.imageTexture;
     this.sizeVariable.material.uniforms['imageTexture'].value = this.imageTexture;
 
+    this.positionVariable.material.uniforms['imageTextureResolution'].value = new THREE.Vector2(this.imageTexture?.image.width, this.imageTexture?.image.height);
+    this.velocityVariable.material.uniforms['imageTextureResolution'].value = new THREE.Vector2(this.imageTexture?.image.width, this.imageTexture?.image.height);
+    this.sizeVariable.material.uniforms['imageTextureResolution'].value = new THREE.Vector2(this.imageTexture?.image.width, this.imageTexture?.image.height);
+
     this.positionVariable.material.uniforms['imageTexture2'].value = this.imageTexture2;
     this.velocityVariable.material.uniforms['imageTexture2'].value = this.imageTexture2;
     this.sizeVariable.material.uniforms['imageTexture2'].value = this.imageTexture2;
+
+    this.positionVariable.material.uniforms['imageTexture2Resolution'].value = new THREE.Vector2(this.imageTexture2?.image.width, this.imageTexture2?.image.height);
+    this.velocityVariable.material.uniforms['imageTexture2Resolution'].value = new THREE.Vector2(this.imageTexture2?.image.width, this.imageTexture2?.image.height);
+    this.sizeVariable.material.uniforms['imageTexture2Resolution'].value = new THREE.Vector2(this.imageTexture2?.image.width, this.imageTexture2?.image.height);
 
     const uMouse = new THREE.Vector2(
       mouseBaseViewport.x,
@@ -1032,7 +1081,9 @@ export class Stage {
 
 
     this.particleUniforms['imageTexture'].value = this.imageTexture;
+    this.particleUniforms['imageTextureResolution'].value = new THREE.Vector2(this.imageTexture?.image.width, this.imageTexture?.image.height);
     this.particleUniforms['imageTexture2'].value = this.imageTexture2;
+    this.particleUniforms['imageTexture2Resolution'].value = new THREE.Vector2(this.imageTexture2?.image.width, this.imageTexture2?.image.height);
 
 
     this.gpuCompute.compute();

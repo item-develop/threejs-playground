@@ -10,8 +10,9 @@ window.addEventListener("DOMContentLoaded", () => {
   smoothScroll.init();
   new Common();
   window.addEventListener('load', () => {
-    new Stage()
+    //    new Stage()
   })
+
   const top = new Top();
   top.init();
 });
