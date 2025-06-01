@@ -699,7 +699,7 @@ export class Stage {
 
     this.gui!.add(myObject, 'uGridBetween')
       .min(2)
-      .max(10)
+      .max(20)
       .step(1)
       .onChange((value: number) => {
         this.positionVariable.material.uniforms['uGridBetween'].value = value;
