@@ -520,7 +520,7 @@ export class Stage {
     const myObject = {
       uImageRate: 0,
       uRandomRate: 0,
-      uSinWave: 0,
+      uSinWave: 0.4,
       uRandomScale: 0,
       uNoiseWave: 0.8,
       uParticleSizeContrust: 1,
