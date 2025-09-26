@@ -79,8 +79,8 @@ export default class ExternalForce extends ShaderPass {
 
     update(props: any) {
         
-        const forceX = Mouse.diff.x / 2 * props.mouse_force + this.autoForce * this.autoMouse.x;
-        const forceY = Mouse.diff.y / 2 * props.mouse_force + this.autoForce * this.autoMouse.y;
+        const forceX = Mouse.diff.x / 2 * props.mouse_force;
+        const forceY = Mouse.diff.y / 2 * props.mouse_force;
 
         const cursorSizeX = props.cursor_size * props.cellScale.x;
         const cursorSizeY = props.cursor_size * props.cellScale.y;

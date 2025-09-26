@@ -4,15 +4,37 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { getVh } from '../Common/utils';
 
 import { GUI } from 'lil-gui'
-import { colorBoxFrag, finalFrag } from '../Common/common';
+import { boxVertex, finalFrag } from '../Common/common';
 import gsap from 'gsap';
+import { colorBoxFrag } from '../Common/colorBoxFrag';
+import { DecalGeometry } from 'three/examples/jsm/Addons.js';
+import { vec3 } from 'three/examples/jsm/nodes/Nodes.js';
 
 // 直方体のサイズ
 const BOX_SIZE = {
   width: 1.0,
-  height: 1.0,
+  height: 1.2,
   depth: 1.0
 };
+
+function calculateCameraDistance(
+  squareSize: number,
+  fovDegrees: number,
+  aspect: number
+) {
+  const fovRad = (fovDegrees * Math.PI) / 180;
+  const halfSize = squareSize / 2;
+
+  // 垂直方向の視野から必要な距離
+  const distanceFromHeight = halfSize / Math.tan(fovRad / 2);
+
+  // 水平方向の視野から必要な距離
+  const horizontalFov = 2 * Math.atan(Math.tan(fovRad / 2) * aspect);
+  const distanceFromWidth = halfSize / Math.tan(horizontalFov / 2);
+
+  // より遠い方の距離を使用（両方向で収まるように）
+  return distanceFromWidth;
+}
 
 
 
@@ -32,9 +54,6 @@ export class Stage {
   private boxMesh!: THREE.Mesh;
 
 
-  private mouse = new THREE.Vector2(0, 0);
-  private mouseWorldPosition = new THREE.Vector3();
-
   private maxPullDistance = 2.0; // 引っ張りの最大距離
 
   constructor() {
@@ -42,7 +61,6 @@ export class Stage {
     this.createRenderTargets();
     this.createCube();
     this.createFinalPass();
-    this.setupSimplePullInteraction();
     window.addEventListener('resize', () => this.onWindowResize(), false);
     window.requestAnimationFrame(this.animate);
   }
@@ -55,10 +73,8 @@ export class Stage {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
     const aspect = window.innerWidth / getVh(100);
-    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
-    const posbase = 3
-    this.camera.position.set(posbase, posbase * 1.5, posbase);
-    this.camera.lookAt(0, 0, 0);
+    this.camera = new THREE.PerspectiveCamera(5, aspect, 0.1, 1000);
+
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -98,131 +114,41 @@ export class Stage {
       BOX_SIZE.depth,
     );
 
+    const gradTexture1 = new THREE.TextureLoader().load("/grad_txt_1.png");
+    const gradTexture2 = new THREE.TextureLoader().load("/grad_txt_2.png");
+    const gradTexture3 = new THREE.TextureLoader().load("/grad_txt_3.png");
+    const gradTexture4 = new THREE.TextureLoader().load("/grad_txt_4.png");
+    const gradTexture5 = new THREE.TextureLoader().load("/grad_txt_5.png");
+    const gradTexture6 = new THREE.TextureLoader().load("/grad_txt_6.png");
+
+
+    [
+      gradTexture1,
+      gradTexture2,
+      gradTexture3,
+      gradTexture4,
+      gradTexture5,
+      gradTexture6
+    ].forEach((texture) => {
+      texture.generateMipmaps = true;
+      texture.minFilter = THREE.LinearMipMapLinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      // テクスチャのラッピングモードを設定
+      texture.wrapS = THREE.MirroredRepeatWrapping;
+      texture.wrapT = THREE.MirroredRepeatWrapping;
+    })
+
+    const txtsUniforms = {
+      tGrad1: { value: gradTexture1 },
+      tGrad2: { value: gradTexture2 },
+      tGrad3: { value: gradTexture3 },
+      tGrad4: { value: gradTexture4 },
+      tGrad5: { value: gradTexture5 },
+      tGrad6: { value: gradTexture6 }
+    }
+
     this.frontMaterial = new THREE.ShaderMaterial({
-      vertexShader: `
-        varying vec3 vPosition;
-        varying vec3 vNormal;
-        varying vec3 vWorldPosition;
-        varying vec2 vUv;
-        uniform float uBox;
-        uniform float uFlat;
-        uniform float uTri;
-        
-        uniform float uTime;
-
-
-       
-      // マウスの位置と引っ張り情報
-      uniform vec3 uMouseWorldPosition;
-      uniform float uPullStrength;
-      uniform vec3 uCameraPosition;
-      uniform float uMaxPullDistance;
-
-      
-      const float PI = 3.14159265358979;
-      const float MAX_PULL_DISTANCE = 2.0;
-
-
-        vec3 rotateY (vec3 v, float angle) {
-          float c = cos(angle);
-          float s = sin(angle);
-          return vec3(
-            v.x * c - v.z * s,
-            v.y,
-            v.x * s + v.z * c
-          );
-        }
-        vec3 scaleZ (vec3 v, float scale) {
-          return vec3(
-            v.x,
-            v.y,
-            v.z * scale
-          );
-        }
-
-
-
-        // 距離ベースの引っ張り効果を適用する関数
-      vec3 applyDistancePull(vec3 position, vec3 worldPosition) {
-        if (uPullStrength < 0.01) return position;
-        
-        // マウスのワールド座標からの距離を計算
-        float dist = distance(worldPosition, uMouseWorldPosition);
-        
-        // 距離に基づいて引っ張り効果を計算
-        float pullFactor = 1.0 - smoothstep(0.0, uMaxPullDistance, dist);
-        pullFactor = pow(pullFactor, 2.0); // より急な減衰カーブ
-        
-        // 引っ張りの方向（頂点からマウス位置へ）
-        vec3 pullDir = normalize(uMouseWorldPosition - worldPosition);
-        
-        // 面に応じた調整（左下のバグを修正）
-        vec3 absPos = abs(position);
-        float maxCoord = max(max(absPos.x, absPos.y), absPos.z);
-        
-        // どの面に属するかを判断し、面の法線方向に沿った引っ張りを強めるが
-        // 特定の面（y負方向、x負方向）の動きを制限して左下のバグを修正
-        float faceFactor = 1.0;
-        
-        if (abs(absPos.x - maxCoord) < 0.001) {
-          // X面の場合
-          pullDir.x *= sign(position.x);
-          // X負方向の場合、動きを抑制
-          if (position.x < 0.0) faceFactor = 0.5;
-        } else if (abs(absPos.y - maxCoord) < 0.001) {
-          // Y面の場合
-          pullDir.y *= sign(position.y);
-          // Y負方向の場合、動きを抑制
-          if (position.y < 0.0) faceFactor = 0.5;
-        } else if (abs(absPos.z - maxCoord) < 0.001) {
-          // Z面の場合
-          pullDir.z *= sign(position.z);
-        }
-        
-        // カメラ方向からの視認性を考慮
-        vec3 toCam = normalize(uCameraPosition - worldPosition);
-        float visibilityFactor = max(0.3, dot(normalize(pullDir), toCam));
-        
-        // 引っ張り効果を適用（faceFactor調整を適用）
-        return position + pullDir * pullFactor * uPullStrength * visibilityFactor * faceFactor * 0.5;
-      }
-
-        
-        void main() {
-          vec3 pos = position;
-          
-          //float progress = mod(uTime, 2.0)/2.;
-          float progress = sin(uTime * 2.0) * 0.5 + 0.5; // 0.0から1.0の範囲で変化
-
-          float initY = pos.y;
-
-          
-          pos = rotateY(pos, PI * 0.25);
-          pos = scaleZ(pos, 1.+ uBox*0.5);
-          pos = rotateY(pos, -PI * 0.25);
-          
-          
-          pos.y = (pos.y+0.5) * (1. - uFlat) - 0.5;
-          // pos.x = pos.x + pos.x * uFlat * (-initY);
-          // pos.z = pos.z + pos.z * uFlat * (-initY);
-
-          pos.x = pos.x * (1. - uTri * (initY));
-          pos.z = pos.z * (1. - uTri * (initY));
-
-            // 引っ張り効果を適用
-           // ワールド空間での位置を計算
-        vec3 worldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
-        
-  // 引っ張り効果を適用
-        pos = applyDistancePull(pos, worldPos);
-
-          vPosition = pos;
-          vNormal = normal;
-          vWorldPosition = (modelMatrix * vec4(pos, 1.0)).xyz;
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-        }
-      `,
+      vertexShader: boxVertex,
       fragmentShader: colorBoxFrag,
       uniforms: {
         uTime: { value: 0.0 },
@@ -233,13 +159,15 @@ export class Stage {
         uMouseWorldPosition: { value: new THREE.Vector3() },
         uPullStrength: { value: 0.0 },
         uCameraPosition: { value: new THREE.Vector3() },
-        uMaxPullDistance: { value: 2.0 }
+        uMaxPullDistance: { value: 2.0 },
+        uIsFront: { value: true },
+        ...txtsUniforms
 
       },
       side: THREE.FrontSide,
       transparent: true,
-
     });
+
 
     // 裏面用シェーダーマテリアル
     this.backMaterial = new THREE.ShaderMaterial({
@@ -255,7 +183,9 @@ export class Stage {
         uMouseWorldPosition: { value: new THREE.Vector3() },
         uPullStrength: { value: 0.0 },
         uCameraPosition: { value: new THREE.Vector3() },
-        uMaxPullDistance: { value: 2.0 }
+        uMaxPullDistance: { value: 2.0 },
+        uIsFront: { value: false },
+        ...txtsUniforms
 
       },
       side: THREE.BackSide,
@@ -264,7 +194,16 @@ export class Stage {
 
     // メッシュを作成
     this.boxMesh = new THREE.Mesh(geometry, this.frontMaterial);
-    this.boxMesh.position.y = 0.5
+
+
+    // 歪める
+
+
+
+    // BufferGeometryの頂点を直接変更
+
+
+
 
     this.scene.add(this.boxMesh);
 
@@ -284,111 +223,109 @@ export class Stage {
       uTri: this.frontMaterial!.uniforms.uTri.value,
     };
 
-    let animObjs = {
-      uBox: this.frontMaterial!.uniforms.uBox.value,
-      uFlat: this.frontMaterial!.uniforms.uFlat.value,
-      uTri: this.frontMaterial!.uniforms.uTri.value,
-    };
-
-    const boxAnim = () => {
-      const uBox = Math.random() * 1
-      gsap.to(animObjs, {
-        uBox: uBox,
-        //duration: Math.abs(animObjs.uBox - uBox) * 3,
-        duration: 1,
-        delay: 0,
-        ease: "linear",
-        onUpdate: () => {
-          this.frontMaterial!.uniforms.uBox.value = animObjs.uBox
-          this.backMaterial!.uniforms.uBox.value = animObjs.uBox
-        },
-        onComplete: () => {
-          boxAnim()
-        }
-      })
-    }
-    const flatAnim = () => {
-      const rand = Math.random()
-      const uFlat = rand < 0.333 ? 0 : rand < 0.66 ? 1 : 2
-      gsap.to(animObjs, {
-        uFlat: uFlat,
-        //duration: Math.abs(animObjs.uFlat - uFlat) * 3,
-        duration: 2,
-        delay: 0,
-        ease: "power4.inOut",
-        onUpdate: () => {
-          this.frontMaterial!.uniforms.uFlat.value = animObjs.uFlat
-          this.backMaterial!.uniforms.uFlat.value = animObjs.uFlat
-        },
-        onComplete: () => {
-          flatAnim()
-        }
-      })
-    }
-
-    const triAnim = () => {
-      const uTri = Math.random() * 1
-      gsap.to(animObjs, {
-        uTri: uTri,
-        //duration: Math.abs(animObjs.uTri - uTri) * 3,
-        duration: 1,
-        delay: 0,
-        ease: "linear",
-        onUpdate: () => {
-          this.frontMaterial!.uniforms.uTri.value = animObjs.uTri
-          this.backMaterial!.uniforms.uTri.value = animObjs.uTri
-        },
-        onComplete: () => {
-          triAnim()
-        }
-      })
-    }
-
-/*     boxAnim()
-    flatAnim()
-    triAnim()
- */
 
 
-    this.gui!.add(myObject, 'uBox')
-      .min(0)
-      .max(1)
-      .step(0.01)
-      .onChange((value: number) => {
-        this.frontMaterial!.uniforms.uBox.value = value
-        this.backMaterial!.uniforms.uBox.value = value
-
-      });
-    this.gui!.add(myObject, 'uFlat')
-      .min(0)
-      .max(1)
-      .step(0.01)
-      .onChange((value: number) => {
-        this.frontMaterial!.uniforms.uFlat.value = value
-        this.backMaterial!.uniforms.uFlat.value = value
-      });
-
-    this.gui!.add(myObject, 'uTri')
-      .min(0)
-      .max(1)
-      .step(0.01)
-      .onChange((value: number) => {
-        this.frontMaterial!.uniforms.uTri.value = value
-        this.backMaterial!.uniforms.uTri.value = value
-      });
-
-
-    this.gui.add(
-      { maxPullDistance: this.maxPullDistance },
-      'maxPullDistance',
-      0.5,
-      5.0,
-      0.1
-    ).onChange((value: number) => {
-      this.maxPullDistance = value;
-      this.frontMaterial!.uniforms.uMaxPullDistance.value = value;
-      this.backMaterial!.uniforms.uMaxPullDistance.value = value;
+    const sealMat = new THREE.ShaderMaterial({
+      vertexShader: boxVertex,
+      fragmentShader: `
+       void main() {
+          gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // 赤色のシンプルなシェーダー
+      }
+      `,
+      uniforms: {
+        uTime: { value: 0.0 },
+        uBoxSize: { value: new THREE.Vector3(BOX_SIZE.width, BOX_SIZE.height, BOX_SIZE.depth) },
+        uBox: { value: 1 },
+        uFlat: { value: 0 },
+        uTri: { value: 0 },
+        uMouseWorldPosition: { value: new THREE.Vector3() },
+        uPullStrength: { value: 0.0 },
+        uCameraPosition: { value: new THREE.Vector3() },
+        uMaxPullDistance: { value: 2.0 },
+        uIsFront: { value: true },
+      },
+      side: THREE.FrontSide,
+      transparent: true,
     });
+
+    const geometryLast = new THREE.BoxGeometry(
+      0.4 * BOX_SIZE.width,
+      1.001 * BOX_SIZE.height,
+      0.4 * BOX_SIZE.depth,
+    );
+    const sealMesh = new THREE.Mesh(geometryLast, sealMat);
+
+    //this.scene.add(sealMesh);
+
+
+
+    // デカールの位置、向き、サイズを定義
+    const position = new THREE.Vector3(0.29, 0, -0.29); // 貼り付ける位置
+    const orientation = new THREE.Euler(-Math.PI * 0.5, 0, Math.PI * 0.5); // 回転
+    const size = new THREE.Vector3(1.6, 1.6, 1.6); // サイズ
+
+    // デカールジオメトリを作成
+    this.boxMesh.scale.set(1, 1, 1); // ボックスのスケールを調整
+    const decalGeometry = new DecalGeometry(
+      this.boxMesh, // デカールを貼り付ける対象のメッシュ
+      position,
+      orientation,
+      size
+    );
+
+    // デカール用のマテリアルを作成
+    const texture = new THREE.TextureLoader().load('/linn_logo.png'); // デカールのテクスチャ
+    const decalMaterial = new THREE.MeshBasicMaterial({
+      map: texture, // シールのテクスチャ
+
+      polygonOffset: true,
+      polygonOffsetFactor: -10,
+      alphaTest: 0.01,
+      transparent: true,
+      side: THREE.FrontSide,
+
+    });
+
+    // デカールメッシュを作成してシーンに追加
+    const decalMesh = new THREE.Mesh(decalGeometry, decalMaterial);
+    this.scene.add(decalMesh);
+
+    const position2 = new THREE.Vector3(0, 0.4, 0); // 貼り付ける位置
+    const orientation2 = new THREE.Euler(-Math.PI * 0, 0, Math.PI * 0); // 回転
+    const size2 = new THREE.Vector3(0.95, 0.3, 1); // サイズ
+
+    const decalGeometry2 = new DecalGeometry(
+      this.boxMesh, // デカールを貼り付ける対象のメッシュ
+      position2,
+      orientation2,
+      size2
+    );
+
+    // デカール用のマテリアルを作成
+    const texture2 = new THREE.TextureLoader().load('/linn_copy.png'); // デカールのテクスチャ
+
+    const decalMaterial2 = new THREE.MeshBasicMaterial({
+      map: texture2, // シールのテクスチャ
+
+      polygonOffset: true,
+      polygonOffsetFactor: -10,
+      alphaTest: 0.08,
+      opacity: 1,
+      transparent: true,
+      side: THREE.FrontSide,
+
+
+    });
+
+
+    // デカールメッシュを作成してシーンに追加
+    const decalMesh2 = new THREE.Mesh(decalGeometry2, decalMaterial2);
+    this.scene.add(decalMesh2);
+
+
+
+
+
 
 
 
@@ -432,70 +369,43 @@ export class Stage {
 
 
 
-  // シンプルな引っ張りインタラクションのセットアップメソッド
-  private setupSimplePullInteraction(): void {
-    // マウス移動イベント
-    window.addEventListener('mousemove', (event) => {
-      // マウス位置を正規化 (-1 ~ 1 の範囲)
-      this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      this.mouse.y = -((event.clientY / window.innerHeight) * 2 - 1);
-
-      this.updateMouseWorldPosition();
-    });
-
-    // マウスダウンイベント
+  cameraPositionSet = (time: number) => {
+    // 使用例
+    const r = 1; // 正方形の一辺
 
 
-    // マウスアップイベント
+    const aspect = window.innerWidth / getVh(100);
 
-    // タッチイベントのサポート（モバイル用）
-    window.addEventListener('touchstart', (event) => {
-      if (event.touches.length > 0) {
-        ///this.isPulling = true;
-        this.mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -((event.touches[0].clientY / window.innerHeight) * 2 - 1);
-        this.updateMouseWorldPosition();
-      }
-    });
+    const cameraR = calculateCameraDistance(r, 5, aspect);
+    // クォータニオンで回転を定義
 
-    window.addEventListener('touchmove', (event) => {
-      if (event.touches.length > 0) {
-        this.mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -((event.touches[0].clientY / window.innerHeight) * 2 - 1);
-        this.updateMouseWorldPosition();
-      }
-    });
+    const quat1 = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      time * 0.2
+    );
+    const quat2 = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(1, 0, 0),
+      Math.sin(time) * 0.3
+    );
 
-    window.addEventListener('touchend', () => {
-      //this.isPulling = false;
-    });
+    // クォータニオンを合成
+    const finalQuat = new THREE.Quaternion().multiplyQuaternions(quat1, quat2);
+
+    // 基本位置に適用
+    const basePos = new THREE.Vector3(0, 0, cameraR);
+    basePos.applyQuaternion(finalQuat);
+
+    this.camera.position.copy(basePos);
+
+    const posbase = 12
+    const startPosi = new THREE.Vector3(posbase, posbase * 1.5, posbase);
+
+    const lerp = Math.sin(time * 0.5); // 補間係数
+    startPosi.lerp(this.camera.position, lerp);
+    this.camera.position.copy(startPosi);
+
+    this.camera.lookAt(0, 0, 0); // 原点を見る
   }
-
-
-  // マウスの3D空間での位置を更新
-  private updateMouseWorldPosition(): void {
-    // マウス位置をスクリーン上の点（z=0.5）として扱い、3D空間に変換
-    console.log('this.mouse:', this.mouse);
-    const vector = new THREE.Vector3(this.mouse.x, this.mouse.y, 0.5);
-    vector.unproject(this.camera);
-
-    const camPos = this.camera.position;
-    const dir = vector.sub(camPos).normalize();
-
-    // レイの始点、方向、距離
-    const distance = -camPos.z / dir.z;
-
-    // ワールド空間でのマウス位置
-    this.mouseWorldPosition.copy(camPos).add(dir.multiplyScalar(distance));
-
-    // シェーダーユニフォームを更新
-    if (this.frontMaterial && this.backMaterial) {
-      console.log('this.mouseWorldPosition:', this.mouseWorldPosition);
-      this.frontMaterial.uniforms.uMouseWorldPosition.value.copy(this.mouseWorldPosition);
-      this.backMaterial.uniforms.uMouseWorldPosition.value.copy(this.mouseWorldPosition);
-    }
-  }
-
 
 
 
@@ -520,13 +430,6 @@ export class Stage {
     // 時間の更新
     const elapsedTime = this.clock.getElapsedTime();
 
-
-
-    // Raycasterの更新（毎フレーム）
-    if (this.controls.enabled) {
-
-    }
-
     // コントロールの更新
     this.controls.update();
 
@@ -547,6 +450,9 @@ export class Stage {
     this.finalMaterial.uniforms.uTime.value = elapsedTime;
     this.finalMaterial.uniforms.uCameraPosition.value.copy(this.camera.position);
 
+    this.cameraPositionSet(
+      elapsedTime
+    );
     // フロントフェイスのレンダリング
     this.boxMesh.material = frontMaterial;
     this.renderer.setRenderTarget(this.frontFaceTarget);
