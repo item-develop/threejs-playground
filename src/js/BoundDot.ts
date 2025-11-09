@@ -166,7 +166,7 @@ export default class BoundDot {
       do {
         x = Math.random() * 500 - 250;
         y = Math.random() * 500 - 250;
-      } while (isOverlapping(x, y, posArray, k, particleRadius));
+      } while (isOverlapping(x, y, posArray as any, k, particleRadius));
 
       posArray[k + 0] = x;
       posArray[k + 1] = y;

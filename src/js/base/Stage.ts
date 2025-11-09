@@ -4,6 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { getVh } from '../Common/utils';
 import baseFrag from '../glsl/base.frag?raw'
 import baseVert from '../glsl/base.vert?raw'
+import * as CANNON from 'cannon-es';
 
 export class Stage {
   viewport
@@ -62,7 +63,22 @@ export class Stage {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.stats = new Stats();
   }
+  world!: CANNON.World;
+  boxMeshes: THREE.Mesh[] = [];
+  meshes!: THREE.Mesh[];
+  bodies!: CANNON.Body[];
+  initPhysics() {
+    // 物理ワールドの作成
+    this.world = new CANNON.World({
+      gravity: new CANNON.Vec3(0, -9.82, 0) // 重力設定
+    });
+    this.world.broadphase = new CANNON.NaiveBroadphase();
+    (this.world.solver as any).iterations = 10;
 
+    // 物理オブジェクトとThree.jsオブジェクトを紐付けるための配列
+    this.meshes = [];
+    this.bodies = [];
+  }
   addObject = () => {
     const geometory = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({

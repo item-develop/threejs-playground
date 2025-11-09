@@ -1,0 +1,9 @@
+newmtl Default-Material
+Kd 0.5 0.5 0.5
+
+newmtl Texture_130_OuterFloorSurface_jpg.jpg_-557712
+map_Kd ./PLATEAU_TextureExport/Texture_130_OuterFloorSurface_jpg.jpg_-557712.png
+newmtl packed_image_Texture_131_BridgeConstructionElement_jpg_000000.png_-555660
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_131_BridgeConstructionElement_jpg_000000.png_-555660.png
+newmtl packed_image_Texture_131_WallSurface_jpg_000000.png_-557192
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_131_WallSurface_jpg_000000.png_-557192.png

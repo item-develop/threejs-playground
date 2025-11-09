@@ -16,9 +16,10 @@
     "types": ["vite-plugin-glsl/ext"],
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "files": ["src/types/meshline.d.ts"]
 }

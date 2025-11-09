@@ -147,5 +147,11 @@ export default ({ command, mode }): UserConfigExport => {
 
       liveReload(['components/**/*.ejs']),
     ],
+
+    optimizeDeps: {
+      include: ['three', 'three.meshline'],
+    },
+
+    
   };
 };

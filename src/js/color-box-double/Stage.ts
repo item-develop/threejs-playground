@@ -8,7 +8,6 @@ import { boxVertex, finalFrag } from '../Common/common';
 import gsap from 'gsap';
 import { colorBoxFrag } from '../Common/colorBoxFrag';
 import { DecalGeometry } from 'three/examples/jsm/Addons.js';
-import { vec3 } from 'three/examples/jsm/nodes/Nodes.js';
 
 // 直方体のサイズ
 const BOX_SIZE = {

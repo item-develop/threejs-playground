@@ -1,0 +1,11 @@
+newmtl Default-Material
+Kd 0.5 0.5 0.5
+
+newmtl packed_image_Texture_162_WallSurface_jpg_000000.png_-567384
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_162_WallSurface_jpg_000000.png_-567384.png
+newmtl packed_image_Texture_164_OuterFloorSurface_jpg_000000.png_-567476
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_164_OuterFloorSurface_jpg_000000.png_-567476.png
+newmtl packed_image_Texture_165_WallSurface_jpg_000000.png_-566640
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_165_WallSurface_jpg_000000.png_-566640.png
+newmtl packed_image_Texture_167_BridgeConstructionElement_jpg_000000.png_-566568
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_167_BridgeConstructionElement_jpg_000000.png_-566568.png

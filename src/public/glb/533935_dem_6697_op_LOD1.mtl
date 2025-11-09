@@ -1,0 +1,23 @@
+newmtl Default-Material
+Kd 0.5 0.5 0.5
+
+newmtl combined_map_mesh0_v0_p0.png_-573746
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh0_v0_p0.png_-573746.png
+newmtl combined_map_mesh1_v0_p0.png_-573768
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh1_v0_p0.png_-573768.png
+newmtl combined_map_mesh2_v0_p0.png_-573792
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh2_v0_p0.png_-573792.png
+newmtl combined_map_mesh3_v0_p0.png_-573816
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh3_v0_p0.png_-573816.png
+newmtl combined_map_mesh4_v0_p0.png_-573838
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh4_v0_p0.png_-573838.png
+newmtl combined_map_mesh5_v0_p0.png_-573862
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh5_v0_p0.png_-573862.png
+newmtl combined_map_mesh6_v0_p0.png_-573886
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh6_v0_p0.png_-573886.png
+newmtl combined_map_mesh7_v0_p0.png_-573910
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh7_v0_p0.png_-573910.png
+newmtl combined_map_mesh8_v0_p0.png_-573932
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh8_v0_p0.png_-573932.png
+newmtl combined_map_mesh9_v0_p0.png_-573956
+map_Kd ./PLATEAU_TextureExport/combined_map_mesh9_v0_p0.png_-573956.png

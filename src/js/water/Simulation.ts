@@ -49,13 +49,13 @@ export default class Simulation {
         this.options = {
             iterations_poisson: 32,
             iterations_viscous: 32,
-            mouse_force: 10,
+            mouse_force: 4,
             resolution: 0.5,
             cursor_size: 100,
-            viscous: 30,
+            viscous: 4,
             isBounce: false,
             dt: 0.014,
-            isViscous: false,
+            isViscous: true,
             BFECC: true
         };
 
@@ -101,7 +101,7 @@ export default class Simulation {
             cellScale: this.cellScale,
             cursor_size: this.options.cursor_size,
             dst: this.fbos.vel_1,
-            mouse_force: 0.1, // add
+            mouse_force: this.options.mouse_force
         });
 
         this.viscous = new Viscous({

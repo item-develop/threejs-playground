@@ -82,7 +82,7 @@ canvas {
 
 canvas {
   //background-color: green;
-  pointer-events: none;
+  //pointer-events: none;
 }
 
 $blue: #01428e;
@@ -337,4 +337,51 @@ main {
       }
     }
   }
+}
+
+.oz-main {
+  position: relative;
+  z-index: 4;
+}
+.oz-fv {
+  height: 200vh;
+  &__top {
+    display: flex;
+    align-items: flex-end;
+    gap: 3vw;
+  }
+  &__logo {
+    width: 55vw;
+  }
+  &__jp {
+    width: 16vw;
+    padding-bottom: 3vw;
+  }
+}
+
+.oz-about {
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  height: 3000px;
+  img {
+    width: 57vw;
+  }
+}
+
+.kura-main {
+  position: relative;
+  z-index: 2;
+}
+.kura-fv {
+  height: 80vh;
+}
+
+.kura-about {
+  height: 150vh;
+  border-top: 2px solid black;
+}
+.kura-story {
+  height: 150vh;
+  border-top: 2px solid black;
 }

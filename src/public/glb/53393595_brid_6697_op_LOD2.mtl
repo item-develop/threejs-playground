@@ -1,0 +1,5 @@
+newmtl Default-Material
+Kd 0.5 0.5 0.5
+
+newmtl packed_image_Texture_151_RoofSurface_jpg_000000.png_-565718
+map_Kd ./PLATEAU_TextureExport/packed_image_Texture_151_RoofSurface_jpg_000000.png_-565718.png
