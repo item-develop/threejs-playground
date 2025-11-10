@@ -172,9 +172,9 @@ export class Stage {
     gsap.to(this.linesParam[index], {
       offsetInit: 1,
       //duration: 1,
-      duration: isAdd ? 15 : 10,
+      duration: isAdd ? 15 : 5,
       //delay: Math.random() * 0,
-      ease: 'linear',
+      ease: isAdd ? 'linear' : 'power2.inOut',
       onComplete: () => {
         /*  gsap.to(material, {
            dashOffset: 0,
@@ -302,7 +302,7 @@ export class Stage {
     const meshline = new MeshLineMaterial({
       color: new THREE.Color('#0ff'), // 鮮やかなピンクに変更
       opacity: 1,
-      lineWidth: 0.007,
+      lineWidth: 0.006,
       resolution: new THREE.Vector2(viewport.width, viewport.height),
       useDash: 1,
       dashArray: 2,
@@ -361,7 +361,7 @@ export class Stage {
       //delay: Math.random() * 0,
       ease: 'linear',
       onComplete: () => {
-        const currentRemoveIndex = this.meshes.map(mesh=>mesh.id).indexOf(removeMesh.id);
+        const currentRemoveIndex = this.meshes.map(mesh => mesh.id).indexOf(removeMesh.id);
         this.scene!.remove(removeMesh);
         this.linesParam.splice(currentRemoveIndex, 1);
         this.linesParamPrev.splice(currentRemoveIndex, 1);
@@ -388,7 +388,7 @@ export class Stage {
 
     setInterval(() => {
       this.addLine()
-    }, 2000);
+    }, 1000);
 
     this.trailMaterials.forEach((material, index) => {
       setTimeout(() => {

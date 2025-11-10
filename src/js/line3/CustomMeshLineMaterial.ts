@@ -43,10 +43,10 @@ const vertexShader = [
   `
   vec3 convertPositions(vec3 pos) {
   float diff = abs(dashOffset-1.);
-  diff = smoothstep(0.8, 1.0, diff);
+  diff = smoothstep(0.5, 1.0, diff);
   diff += scrollRate;
-  float noise=snoise(vec2(uTime*0.5+counters*(20.),uTime*0.5+counters*(20.)));
-  pos.z +=(diff*.6 + 0.02)  *pow( (noise+1.)/2., 1.);
+  float noise=snoise(vec2(uTime*0.2+counters*(30.),uTime*0.2+counters*(30.)));
+  pos.z +=(diff*.3 + 0.02)  *pow( (noise+1.)/2., 1.);
   return pos;
 }
   `,
