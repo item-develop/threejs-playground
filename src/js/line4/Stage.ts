@@ -1,28 +1,14 @@
 import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
-import { EffectComposer, OrbitControls } from 'three/examples/jsm/Addons.js';
+import { EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { getVh, lerp } from '../Common/utils';
+import baseFrag from '../glsl/flame.frag?raw'
+import baseVert from '../glsl/base.vert?raw'
 import { MeshLineMaterial } from './CustomMeshLineMaterial';
+import { depth } from 'three/tsl';
 import { GUI } from 'lil-gui'
 import gsap from 'gsap';
-import { clamp } from 'three/src/math/MathUtils.js';
-
-function getRandomIndexOfOne(arr: number[]): number | null {
-  // 値が1である要素のインデックスを全て取得
-  const indicesOfOne = arr
-    .map((value, index) => value === 1 ? index : -1)
-    .filter(index => index !== -1);
-
-  // 1が存在しない場合はnullを返す
-  if (indicesOfOne.length === 0) {
-    return null;
-  }
-
-  // ランダムにインデックスを選択
-  const randomIndex = Math.floor(Math.random() * indicesOfOne.length);
-  return indicesOfOne[randomIndex];
-}
 
 // ダブリングマップ（テープの接合）によるカオス軌道生成
 export function generateDoublingMapTrajectory(
@@ -60,6 +46,10 @@ export function generateDoublingMapTrajectory(
 
   return points;
 }
+
+
+
+
 
 
 
@@ -103,13 +93,12 @@ export class Stage {
   private init(): void {
     this.container = document.createElement('div');
     document.body.appendChild(this.container);
-    this.camera = new THREE.PerspectiveCamera(75, this.getCanvasSize().width / this.getCanvasSize().height, .1, 100);
+    this.camera = new THREE.PerspectiveCamera(75, this.getCanvasSize().width / this.getCanvasSize().height, 0.1, 100);
 
 
     this.renderer = new THREE.WebGLRenderer(
       {
         alpha: true,
-        antialias: true
       }
     );
     this.renderer.setPixelRatio(
@@ -153,7 +142,7 @@ export class Stage {
     )
     this.camera.updateMatrix();
 
-
+    const axisHelper = new THREE.AxesHelper(5);
     //this.scene.add(axisHelper);
 
 
@@ -165,17 +154,16 @@ export class Stage {
   }
 
   strech = (
-    index: number,
-    isAdd = false
+    index: number
   ) => {
-
     gsap.to(this.linesParam[index], {
       offsetInit: 1,
       //duration: 1,
-      duration: isAdd ? 15 : 10,
+      duration: 15,
       //delay: Math.random() * 0,
       ease: 'linear',
       onComplete: () => {
+
         /*  gsap.to(material, {
            dashOffset: 0,
            duration: 2,
@@ -205,22 +193,16 @@ export class Stage {
     // 初期条件
     //let x = 0.1 + i * 0.01 * Math.random();
     const getRandom = () => {
-      return (Math.random() - 0.5) * 10
+      return (Math.random() - 0.5) * 4
     }
-    /* let x = getRandom() - 0
-    let y = getRandom() - 30;
-    let z = 20; */
-    /* let x = getRandom() + 30;
-    let y = getRandom() + 15;
-    let z = getRandom() + 30; */
     let x = getRandom() - 3;
     let y = getRandom() + 5;
     let z = getRandom() + 30;
 
 
     // 時間刻み幅と計算ステップ数
-    const dt = 0.02;
-    const steps = 1000;
+    const dt = 0.01;
+    const steps = 50000;
 
     // ルンゲ・クッタ法（4次）で数値積分
     for (let i = 0; i < steps; i++) {
@@ -261,36 +243,39 @@ export class Stage {
 
       // スケーリングして3D空間に配置（見やすいサイズに調整）
 
-      const scale = 0.067;
-      const pos = new THREE.Vector3(y * scale - 0.5, x * - scale + -0.1, -z * scale + 1.9)
+      const scale = 0.064;
+      const pos = new THREE.Vector3(y * scale - 0.4, x * - scale + -0.2, -z * scale + 1.9)
       // 
       // X軸のベクトル
       const axis = new THREE.Vector3(1, 0, 0);
       const angle = Math.PI / 2; // 45度
       pos.applyAxisAngle(axis, angle);
       const axis2 = new THREE.Vector3(0, 1, 0);
-      const angle2 = Math.PI / 1.16; // 45度
+      const angle2 = Math.PI / 1.2; // 45度
       pos.applyAxisAngle(axis2, angle2);
-      //pos.x += pos.x > 0 ? pos.x * 0.5 : 0;
-      //pos.z += pos.x > 0 ? pos.x * 0.2 : 0;
       points.push(pos);
     }
 
-    //console.log('points[0].length:', points[0].length());
+    console.log('points[0].length:', points[0].length());
+
     return points;
   }
 
   trailMaterials: MeshLineMaterial[] = [];
   createMeshLine = (i: number) => {
+    // ローレンツアトラクターの点を生成
+    console.log('i:', i);
     const lorenzPoints = this.solveLorenz(7, 28, 8 / 3, i * 1);
 
     // CatmullRomCurve3でスムーズな曲線を作成
     const curve = new THREE.CatmullRomCurve3(lorenzPoints);
     const length = curve.getLength();
-    const cP = curve.getSpacedPoints(length * 70); // 点の密度を調整
+    console.log('length:', length);
+    const cP = curve.getSpacedPoints(length * 800); // 点の密度を調整
     const geometry = new THREE.BufferGeometry().setFromPoints(cP);
 
     const line = new MeshLine();
+    console.log('geometry.attributes.position.count:', geometry.attributes.position.count);
     line.setGeometry(geometry);
 
     this.linesParam.push({
@@ -302,101 +287,60 @@ export class Stage {
     const meshline = new MeshLineMaterial({
       color: new THREE.Color('#0ff'), // 鮮やかなピンクに変更
       opacity: 1,
-      lineWidth: 0.007,
+      lineWidth: 0.005,
       resolution: new THREE.Vector2(viewport.width, viewport.height),
       useDash: 1,
       dashArray: 2,
       dashOffset: 2,
       dashRatio: 0.5,
       transparent: true,
-      depthWrite: true,
-      depthTest: false,
+      depthWrite: false,
       uTotalLength: length,
-      alphaTest: 0.9,
-      side: THREE.DoubleSide,
-
       //blending: THREE.SubtractiveBlending,
     } as any);
 
     const _line = new THREE.Mesh(line.geometry, meshline);
     this.trailMaterials.push(meshline);
-    _line.frustumCulled = false; // カリング無効化
-    this.meshes.push(_line);
     return _line;
   }
 
   effectComposer: EffectComposer | null = null;
   addLine = () => {
-    const dashes = this.linesParam.map(material => material.offsetInit);
-    /* if (!dashes.some(offset => offset === 1)) {
-      return;
-    } */
-
     const meshLine = this.createMeshLine(0);
+    console.log('meshLine:', meshLine);
+    this.trailMaterials.push(meshLine.material as MeshLineMaterial);
     this.scene!.add(meshLine);
-    this.strech(this.trailMaterials.length - 1, true);
-
-    this.removeLine();
+    this.strech(this.trailMaterials.length - 1);
+    console.log('this.trailMaterials.length:', this.trailMaterials.length);
   }
-
-  removingIndexs: number[] = []
-
-  removeLine = () => {
-    console.log('this.scene?.children.length:', this.scene?.children.length);
-    console.log('this.linesParam.map(param => param.offsetInit):', this.linesParam.map(param => param.offsetInit));
-    const randomIndex = getRandomIndexOfOne(this.linesParam.map(param => param.offsetInit));
-    console.log('randomIndex:', randomIndex);
-    if (randomIndex === null) {
-      return;
-    }
-    this.removingIndexs.push(randomIndex);
-    const materialToRemove = this.trailMaterials[randomIndex];
-
-    const removeMesh = this.meshes[randomIndex];
-
-    gsap.to(this.linesParam[randomIndex], {
-      offsetInit: 0,
-      //duration: 1,
-      duration: 15,
-      //delay: Math.random() * 0,
-      ease: 'linear',
-      onComplete: () => {
-        const currentRemoveIndex = this.meshes.map(mesh=>mesh.id).indexOf(removeMesh.id);
-        this.scene!.remove(removeMesh);
-        this.linesParam.splice(currentRemoveIndex, 1);
-        this.linesParamPrev.splice(currentRemoveIndex, 1);
-        this.trailMaterials.splice(currentRemoveIndex, 1);
-        this.meshes.splice(currentRemoveIndex, 1);
-        removeMesh.geometry.dispose();
-        materialToRemove.dispose();
-        this.removingIndexs = this.removingIndexs.filter(index => index !== currentRemoveIndex);
-      }
-    })
-
-
-
-
-  }
-  meshes: THREE.Mesh[] = [];
   addObject = () => {
 
-    for (var i = 0; i < 30; i++) {
+    /* setInterval(() => {
+      this.addLine();
+    }, 1000); */
+
+    // this.scene!.add(new THREE.Mesh(geometory, material));
+    for (var i = 0; i < 1; i++) {
       //if (i === 4) {
       const meshLine = this.createMeshLine(i);
+      console.log('meshLine:', meshLine);
       this.scene!.add(meshLine);
-    }
+      //}
 
-    setInterval(() => {
-      this.addLine()
-    }, 2000);
+    }
 
     this.trailMaterials.forEach((material, index) => {
       setTimeout(() => {
         this.strech(index)
-      }, 1000);
-
+      }, 4000 * Math.random());
     })
 
+
+
+    // 背景を暗くしてアトラクターを目立たせる
+    //this.scene!.background = new THREE.Color(0x000000);
+
+    // アンビエントライトを追加
 
   }
 
@@ -460,8 +404,8 @@ export class Stage {
     const mouseDistance = Math.sqrt(this.mouseLerp.x * this.mouseLerp.x + this.mouseLerp.y * this.mouseLerp.y);
 
     const speed = 1
-    const sct = Math.min(window.scrollY, window.innerHeight * 2);
-    const scrollRate = sct / (window.innerHeight * 2)
+    const sct = Math.min(window.scrollY, window.innerHeight);
+    const scrollRate = sct / window.innerHeight
     const mouseAdd = new THREE.Vector3(
       + 0.2 + Math.sin(speed * _time * 0.0005) * 0.1 + this.mouseLerp.y * 0.1,
       - 0 + Math.cos(speed * _time * 0.001) * 0.15 + this.mouseLerp.x * 0.1,
@@ -477,7 +421,7 @@ export class Stage {
       this.camera.position,
       new THREE.Vector3(
         this.baseCameraPos.x + 1 + mouseAdd.x,
-        mouseAdd.y,
+        -0.3 + mouseAdd.y,
         1 + mouseAdd.z
       ), // 原点
       scrollRate
@@ -489,22 +433,25 @@ export class Stage {
     this.camera.matrixAutoUpdate = true;
 
 
-    this.scene?.children.forEach((child, i) => {
-      const material = (child as THREE.Mesh).material as MeshLineMaterial
-      material.uTime = _time * 0.001
-      const offset = (-scrollRate) * this.linesParam[i].offsetInit
-        + this.linesParam[i].offsetInit
 
-      material.dashOffset = clamp(lerp(
-        material.dashOffset,
+    this.trailMaterials.forEach((material, i) => {
+      material.uTime = _time * 0.001
+      const offset = -sct / window.innerHeight + this.linesParam[i].offsetInit
+      material.dashOffset = lerp(
+        this.linesParamPrev[i] || 2,
         offset,
         1
-      ), 0, 2)
-      material.scrollRate = scrollRate
+      )
+      
       this.linesParamPrev[i] = material.dashOffset
-
     })
 
+
+    /* 
+        this.trailMaterial.dashOffset = 1;
+        if (this.trailMaterial.dashOffset > 1) {
+        } */
+    //this.trailMaterial.dashOffset += 1; // ダッシュのオフセットを更新して動きをつける
 
     this.renderer.render(this.scene!, this.camera);
   }

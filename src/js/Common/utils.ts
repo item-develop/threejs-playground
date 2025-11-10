@@ -1,4 +1,6 @@
+import * as THREE from 'three';
 export const clamp = (value: number, min = 0, max = 1) => {
+
   return Math.min(Math.max(value, min), max);
 };
 export const getContentHeight = () => {
@@ -249,3 +251,86 @@ export function isOutsideElement(
 }
 
 export const numToArray = (num: number) => new Array(num).fill(0).map((_, i) => i);
+
+
+// ローレンツ方程式を解く関数
+export const solveLorenz = (a: number = 10, b: number = 28, c: number = 8 / 3, i = 0): THREE.Vector3[] => {
+  const points: THREE.Vector3[] = [];
+
+  // 初期条件
+  //let x = 0.1 + i * 0.01 * Math.random();
+  const getRandom = () => {
+    return (Math.random() - 0.5) * 10
+  }
+  /* let x = getRandom() - 0
+  let y = getRandom() - 30;
+  let z = 20; */
+  /* let x = getRandom() + 30;
+  let y = getRandom() + 15;
+  let z = getRandom() + 30; */
+  let x = getRandom() - 3;
+  let y = getRandom() + 5;
+  let z = getRandom() + 30;
+
+
+  // 時間刻み幅と計算ステップ数
+  const dt = 0.02;
+  const steps = 1000;
+
+  // ルンゲ・クッタ法（4次）で数値積分
+  for (let i = 0; i < steps; i++) {
+
+    // k1
+    const k1x = a * (y - x);
+    const k1y = x * (b - z) - y;
+    const k1z = x * y - c * z;
+
+    // k2
+    const x2 = x + k1x * dt / 2;
+    const y2 = y + k1y * dt / 2;
+    const z2 = z + k1z * dt / 2;
+    const k2x = a * (y2 - x2);
+    const k2y = x2 * (b - z2) - y2;
+    const k2z = x2 * y2 - c * z2;
+
+    // k3
+    const x3 = x + k2x * dt / 2;
+    const y3 = y + k2y * dt / 2;
+    const z3 = z + k2z * dt / 2;
+    const k3x = a * (y3 - x3);
+    const k3y = x3 * (b - z3) - y3;
+    const k3z = x3 * y3 - c * z3;
+
+    // k4
+    const x4 = x + k3x * dt;
+    const y4 = y + k3y * dt;
+    const z4 = z + k3z * dt;
+    const k4x = a * (y4 - x4);
+    const k4y = x4 * (b - z4) - y4;
+    const k4z = x4 * y4 - c * z4;
+
+    // 更新
+    x += (k1x + 2 * k2x + 2 * k3x + k4x) * dt / 6;
+    y += (k1y + 2 * k2y + 2 * k3y + k4y) * dt / 6;
+    z += (k1z + 2 * k2z + 2 * k3z + k4z) * dt / 6;
+
+    // スケーリングして3D空間に配置（見やすいサイズに調整）
+
+    const scale = 0.067;
+    const pos = new THREE.Vector3(y * scale - 0.5, x * - scale + -0.1, -z * scale + 1.9)
+    // 
+    // X軸のベクトル
+    const axis = new THREE.Vector3(1, 0, 0);
+    const angle = Math.PI / 2; // 45度
+    pos.applyAxisAngle(axis, angle);
+    const axis2 = new THREE.Vector3(0, 1, 0);
+    const angle2 = Math.PI / 1.16; // 45度
+    pos.applyAxisAngle(axis2, angle2);
+    //pos.x += pos.x > 0 ? pos.x * 0.5 : 0;
+    //pos.z += pos.x > 0 ? pos.x * 0.2 : 0;
+    points.push(pos);
+  }
+
+  //console.log('points[0].length:', points[0].length());
+  return points;
+}

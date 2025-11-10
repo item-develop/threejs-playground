@@ -1,8 +1,8 @@
 import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
-import { EffectComposer, OrbitControls } from 'three/examples/jsm/Addons.js';
+import { BloomPass, EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh, lerp } from '../Common/utils';
+import { getVh, lerp, solveLorenz } from '../Common/utils';
 import { MeshLineMaterial } from './CustomMeshLineMaterial';
 import { GUI } from 'lil-gui'
 import gsap from 'gsap';
@@ -22,43 +22,6 @@ function getRandomIndexOfOne(arr: number[]): number | null {
   // ランダムにインデックスを選択
   const randomIndex = Math.floor(Math.random() * indicesOfOne.length);
   return indicesOfOne[randomIndex];
-}
-
-// ダブリングマップ（テープの接合）によるカオス軌道生成
-export function generateDoublingMapTrajectory(
-  initialValue: number = 0.1,
-  steps: number = 1000,
-  dimensions: number = 3
-): THREE.Vector3[] {
-  const points: THREE.Vector3[] = [];
-  let x = initialValue;
-
-  // 履歴を保持して高次元埋め込みを行う
-  const history: number[] = [];
-
-  for (let i = 0; i < steps + dimensions; i++) {
-    // ダブリングマップの適用
-    x = x * 2;
-    if (x >= 1.0) {
-      x = x - 1.0;
-    }
-
-    history.push(x);
-
-    // 十分な履歴が貯まったら3次元座標を生成
-    if (history.length >= dimensions) {
-      // 時間遅れ埋め込み（Takens embedding）
-      const point = new THREE.Vector3(
-        history[history.length - 3] * 2 - 1,  // x: [-1, 1]にスケール
-        history[history.length - 2] * 2 - 1,  // y: [-1, 1]にスケール
-        history[history.length - 1] * 2 - 1   // z: [-1, 1]にスケール
-      );
-
-      points.push(point);
-    }
-  }
-
-  return points;
 }
 
 
@@ -100,16 +63,35 @@ export class Stage {
   raycastPlane!: THREE.Mesh;
   dummy!: THREE.Mesh;
   gui: GUI | null = null;
+  computeCamera!: THREE.OrthographicCamera;
+  getMRT() {
+    const e = new THREE.WebGLRenderTarget(this.getCanvasSize().width,
+      this.getCanvasSize().height, {
+      type: THREE.FloatType,
+      format: THREE.RGBAFormat,
+      count: 2,
+    });
+    console.log('e:', e);
+    return e.textures[0].generateMipmaps = !1,
+      e.textures[0].minFilter = 1006,
+      e.textures[0].magFilter = 1006,
+      e.textures[1].generateMipmaps = !1,
+      e.textures[1].minFilter = 1006,
+      e.textures[1].magFilter = 1006,
+      e
+  }
   private init(): void {
     this.container = document.createElement('div');
     document.body.appendChild(this.container);
-    this.camera = new THREE.PerspectiveCamera(75, this.getCanvasSize().width / this.getCanvasSize().height, .1, 100);
+    this.camera = new THREE.PerspectiveCamera(75, this.getCanvasSize().width / this.getCanvasSize().height, 0.01, 100);
 
+    this.computeCamera = new THREE.OrthographicCamera(
+      -1, 1, 1, -1, 0.1, 10
+    );
 
     this.renderer = new THREE.WebGLRenderer(
       {
         alpha: true,
-        antialias: true
       }
     );
     this.renderer.setPixelRatio(
@@ -119,7 +101,7 @@ export class Stage {
     );
 
     this.scene = new THREE.Scene();
-    //    this.scene!.background = new THREE.Color(0xffffff);
+    //this.scene!.background = new THREE.Color(0xffffff);
     this.gui = new GUI()
 
 
@@ -162,6 +144,121 @@ export class Stage {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.stats = new Stats();
     this.container.appendChild(this.stats.dom);
+
+    // EffectComposerのセットアップ - 被写界深度効果
+    this.effectComposer = new EffectComposer(this.renderer);
+
+    // 通常のレンダリングパス
+    const renderPass = new RenderPass(this.scene, this.camera);
+    this.effectComposer.addPass(renderPass);
+
+    // カスタム被写界深度シェーダー
+    const DepthOfFieldShader = {
+      uniforms: {
+        tDiffuse: { value: null },
+        tDepth: { value: null },
+        resolution: { value: new THREE.Vector2(this.getCanvasSize().width, this.getCanvasSize().height) },
+        cameraNear: { value: this.camera.near },
+        cameraFar: { value: this.camera.far },
+        focusDistance: { value: 1.2 }, // カメラからの焦点距離
+        focusRange: { value: 0.9 },    // 焦点が合う範囲
+        blurStrength: { value: 1 }   // ブラー強度
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D tDiffuse;
+        uniform sampler2D tDepth;
+        uniform vec2 resolution;
+        uniform float cameraNear;
+        uniform float cameraFar;
+        uniform float focusDistance;
+        uniform float focusRange;
+        uniform float blurStrength;
+
+        varying vec2 vUv;
+
+        // 深度値を線形化（手動実装）
+        float linearizeDepth(float depth) {
+          // パースペクティブカメラの深度バッファを線形深度に変換
+          float z = depth * 2.0 - 1.0; // [0,1] -> [-1,1]
+          return (2.0 * cameraNear * cameraFar) / (cameraFar + cameraNear - z * (cameraFar - cameraNear));
+        }
+
+        void main() {
+          vec2 texelSize = 1.0 / resolution;
+
+          // 深度取得して線形化
+          float depth = texture2D(tDepth, vUv).x;
+          float linearDepth = linearizeDepth(depth);
+
+          // 焦点からの距離を計算
+          float distanceFromFocus = abs(linearDepth - focusDistance);
+
+          // ボケ量を計算（焦点範囲外でボケる）
+          float blur = smoothstep(focusRange * 0.5, focusRange + 1.5, distanceFromFocus);
+
+          // 奥に行くほど強くボケるようにバイアスをかける
+          float depthBias = smoothstep(focusDistance, focusDistance + 3.0, linearDepth);
+          blur = mix(blur, 1.0, depthBias * 0.8);
+
+          // ブラー適用
+          vec4 sum = vec4(0.0);
+          float totalWeight = 0.0;
+          float blurSize = blur * blurStrength;
+
+          // ガウシアンブラー風のサンプリング
+          for(float x = -4.0; x <= 4.0; x += 1.0) {
+            for(float y = -4.0; y <= 4.0; y += 1.0) {
+              vec2 offset = vec2(x, y) * texelSize * blurSize;
+              float weight = exp(-(x*x + y*y) / 16.0);
+              sum += texture2D(tDiffuse, vUv + offset) * weight;
+              totalWeight += weight;
+            }
+          }
+
+          gl_FragColor = sum / totalWeight;
+        }
+      `
+    };
+
+    // 深度テクスチャ用のレンダーターゲット
+    this.depthRenderTarget = new THREE.WebGLRenderTarget(
+      this.getCanvasSize().width,
+      this.getCanvasSize().height,
+      {
+        minFilter: THREE.NearestFilter,
+        magFilter: THREE.NearestFilter,
+        format: THREE.RGBAFormat
+      }
+    );
+    this.depthRenderTarget.depthTexture = new THREE.DepthTexture(
+      this.getCanvasSize().width,
+      this.getCanvasSize().height
+    );
+
+    // DOFパス
+    const bloomPass = new BloomPass(1.1, 2, 0.1);
+    this.effectComposer.addPass(bloomPass);
+
+    const dofPass = new ShaderPass(DepthOfFieldShader);
+    dofPass.uniforms.tDepth.value = this.depthRenderTarget.depthTexture;
+    this.dofPass = dofPass;
+    this.effectComposer.addPass(dofPass);
+
+    // GUI for DOF parameters
+    const dofFolder = this.gui!.addFolder('Depth of Field');
+    dofFolder.add(dofPass.uniforms.focusDistance, 'value', 0.1, 10.0, 0.1).name('Focus Distance');
+    dofFolder.add(dofPass.uniforms.focusRange, 'value', 0.1, 3.0, 0.1).name('Focus Range');
+    dofFolder.add(dofPass.uniforms.blurStrength, 'value', 0.0, 15.0, 0.5).name('Blur Strength');
+    dofFolder.open();
+
+    
   }
 
   strech = (
@@ -198,91 +295,10 @@ export class Stage {
     return { width, height };
   }
 
-  // ローレンツ方程式を解く関数
-  private solveLorenz(a: number = 10, b: number = 28, c: number = 8 / 3, i = 0): THREE.Vector3[] {
-    const points: THREE.Vector3[] = [];
-
-    // 初期条件
-    //let x = 0.1 + i * 0.01 * Math.random();
-    const getRandom = () => {
-      return (Math.random() - 0.5) * 10
-    }
-    /* let x = getRandom() - 0
-    let y = getRandom() - 30;
-    let z = 20; */
-    /* let x = getRandom() + 30;
-    let y = getRandom() + 15;
-    let z = getRandom() + 30; */
-    let x = getRandom() - 3;
-    let y = getRandom() + 5;
-    let z = getRandom() + 30;
-
-
-    // 時間刻み幅と計算ステップ数
-    const dt = 0.02;
-    const steps = 1000;
-
-    // ルンゲ・クッタ法（4次）で数値積分
-    for (let i = 0; i < steps; i++) {
-
-      // k1
-      const k1x = a * (y - x);
-      const k1y = x * (b - z) - y;
-      const k1z = x * y - c * z;
-
-      // k2
-      const x2 = x + k1x * dt / 2;
-      const y2 = y + k1y * dt / 2;
-      const z2 = z + k1z * dt / 2;
-      const k2x = a * (y2 - x2);
-      const k2y = x2 * (b - z2) - y2;
-      const k2z = x2 * y2 - c * z2;
-
-      // k3
-      const x3 = x + k2x * dt / 2;
-      const y3 = y + k2y * dt / 2;
-      const z3 = z + k2z * dt / 2;
-      const k3x = a * (y3 - x3);
-      const k3y = x3 * (b - z3) - y3;
-      const k3z = x3 * y3 - c * z3;
-
-      // k4
-      const x4 = x + k3x * dt;
-      const y4 = y + k3y * dt;
-      const z4 = z + k3z * dt;
-      const k4x = a * (y4 - x4);
-      const k4y = x4 * (b - z4) - y4;
-      const k4z = x4 * y4 - c * z4;
-
-      // 更新
-      x += (k1x + 2 * k2x + 2 * k3x + k4x) * dt / 6;
-      y += (k1y + 2 * k2y + 2 * k3y + k4y) * dt / 6;
-      z += (k1z + 2 * k2z + 2 * k3z + k4z) * dt / 6;
-
-      // スケーリングして3D空間に配置（見やすいサイズに調整）
-
-      const scale = 0.067;
-      const pos = new THREE.Vector3(y * scale - 0.5, x * - scale + -0.1, -z * scale + 1.9)
-      // 
-      // X軸のベクトル
-      const axis = new THREE.Vector3(1, 0, 0);
-      const angle = Math.PI / 2; // 45度
-      pos.applyAxisAngle(axis, angle);
-      const axis2 = new THREE.Vector3(0, 1, 0);
-      const angle2 = Math.PI / 1.16; // 45度
-      pos.applyAxisAngle(axis2, angle2);
-      //pos.x += pos.x > 0 ? pos.x * 0.5 : 0;
-      //pos.z += pos.x > 0 ? pos.x * 0.2 : 0;
-      points.push(pos);
-    }
-
-    //console.log('points[0].length:', points[0].length());
-    return points;
-  }
 
   trailMaterials: MeshLineMaterial[] = [];
   createMeshLine = (i: number) => {
-    const lorenzPoints = this.solveLorenz(7, 28, 8 / 3, i * 1);
+    const lorenzPoints = solveLorenz(7, 28, 8 / 3, i * 1);
 
     // CatmullRomCurve3でスムーズな曲線を作成
     const curve = new THREE.CatmullRomCurve3(lorenzPoints);
@@ -308,14 +324,18 @@ export class Stage {
       dashArray: 2,
       dashOffset: 2,
       dashRatio: 0.5,
+      //alphaTest: 0.5,
+      //transparent: false,
+      /* depthWrite: true,
+      depthTest: false, */
+
       transparent: true,
       depthWrite: true,
       depthTest: false,
       uTotalLength: length,
       alphaTest: 0.9,
-      side: THREE.DoubleSide,
 
-      //blending: THREE.SubtractiveBlending,
+      side: THREE.DoubleSide
     } as any);
 
     const _line = new THREE.Mesh(line.geometry, meshline);
@@ -326,11 +346,9 @@ export class Stage {
   }
 
   effectComposer: EffectComposer | null = null;
+  dofPass: ShaderPass | null = null;
+  depthRenderTarget!: THREE.WebGLRenderTarget;
   addLine = () => {
-    const dashes = this.linesParam.map(material => material.offsetInit);
-    /* if (!dashes.some(offset => offset === 1)) {
-      return;
-    } */
 
     const meshLine = this.createMeshLine(0);
     this.scene!.add(meshLine);
@@ -342,10 +360,7 @@ export class Stage {
   removingIndexs: number[] = []
 
   removeLine = () => {
-    console.log('this.scene?.children.length:', this.scene?.children.length);
-    console.log('this.linesParam.map(param => param.offsetInit):', this.linesParam.map(param => param.offsetInit));
     const randomIndex = getRandomIndexOfOne(this.linesParam.map(param => param.offsetInit));
-    console.log('randomIndex:', randomIndex);
     if (randomIndex === null) {
       return;
     }
@@ -361,7 +376,7 @@ export class Stage {
       //delay: Math.random() * 0,
       ease: 'linear',
       onComplete: () => {
-        const currentRemoveIndex = this.meshes.map(mesh=>mesh.id).indexOf(removeMesh.id);
+        const currentRemoveIndex = this.meshes.map(mesh => mesh.id).indexOf(removeMesh.id);
         this.scene!.remove(removeMesh);
         this.linesParam.splice(currentRemoveIndex, 1);
         this.linesParamPrev.splice(currentRemoveIndex, 1);
@@ -384,10 +399,19 @@ export class Stage {
       //if (i === 4) {
       const meshLine = this.createMeshLine(i);
       this.scene!.add(meshLine);
+
     }
 
+
+    const box = new THREE.BoxGeometry(5, 1, 1);
+    const materialBox = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const cube = new THREE.Mesh(box, materialBox);
+    cube.position.set(0, 0, 0);
+
+    //this.scene?.add(cube);
+
     setInterval(() => {
-      this.addLine()
+      //      this.addLine()
     }, 2000);
 
     this.trailMaterials.forEach((material, index) => {
@@ -416,8 +440,18 @@ export class Stage {
   private onWindowResize(): void {
     //this.camera.aspect = this.getCanvasSize().width / this.getCanvasSize().height;
 
-
     this.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
+    this.effectComposer?.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
+
+    // 深度レンダーターゲットもリサイズ
+    if (this.depthRenderTarget) {
+      this.depthRenderTarget.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
+    }
+
+    // DOFシェーダーの解像度も更新
+    if (this.dofPass) {
+      this.dofPass.uniforms.resolution.value.set(this.getCanvasSize().width, this.getCanvasSize().height);
+    }
   }
   baseCameraPos = new THREE.Vector3(
     -2, 0, 1.4
@@ -435,8 +469,6 @@ export class Stage {
 
 
     this.stats.update();
-
-
 
     this.camera.updateMatrix();
 
@@ -505,8 +537,21 @@ export class Stage {
 
     })
 
-
+    // 深度テクスチャを生成
+    this.scene?.children.forEach((child) => {
+      const material = (child as THREE.Mesh).material as MeshLineMaterial
+      material.depthTest = true;
+    });
+    this.renderer.setRenderTarget(this.depthRenderTarget);
     this.renderer.render(this.scene!, this.camera);
+    this.renderer.setRenderTarget(null);
+    
+    this.scene?.children.forEach((child) => {
+      const material = (child as THREE.Mesh).material as MeshLineMaterial
+      material.depthTest = false;
+    });
+    // 被写界深度効果を含めてレンダリング
+    this.effectComposer!.render();
   }
 
   private isWebGLAvailable(): boolean {

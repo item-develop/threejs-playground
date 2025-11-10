@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>ITEM</title>
+  <meta name="description" content="今後考えます。">
+  <meta name="viewport" content="width=device-width">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="ITEM">
+  <meta property="og:description" content="今後考えます。">
+  <meta property="og:url" content="https://item-item.com">
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:image" content="https://item-item.com/img/OGP.png">
+  <meta property="og:site_name" content="ITEM">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/scss/style.scss">
+
+  <style>
+    .line-h {
+      position: absolute;
+      left: 50%;
+      width: 2px;
+      height: 100%;
+      height: 100%;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
+
+    .line-v {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      height: 2px;
+      z-index: 100;
+      background-color: #ccc;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div>
+    <div class="h-100svh-skel"></div>
+    <div class="line-v"></div>
+    <div class="line-h"></div>
+    <canvas id="three"></canvas>
+    <main class="oz-main">
+      <div class="oz-fv">
+        <div class="oz-fv__top">
+          <div class="oz-fv__logo">
+            <img src="/img/oasiz_logo.svg" alt="">
+          </div>
+          <div class="oz-fv__jp">
+            <img src="/img/oasiz_txt.svg" alt="">
+          </div>
+        </div>
+      </div>
+
+      <div class="oz-about">
+        <div class="oz-about__head">
+          <img src="/img/oasiz_desc.svg" alt="">
+        </div>
+      </div>
+    </main>
+
+  </div>
+  <script type="module" src="/js/line5/index.ts"></script>
+</body>
+
+</html>

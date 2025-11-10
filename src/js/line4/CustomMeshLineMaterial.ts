@@ -17,7 +17,6 @@ const vertexShader = [
   'uniform vec3 color;',
   'uniform float opacity;',
   'uniform float uTime;',
-  'uniform float scrollRate;',
   'uniform float sizeAttenuation;',
   `
 
@@ -42,11 +41,8 @@ const vertexShader = [
   '',
   `
   vec3 convertPositions(vec3 pos) {
-  float diff = abs(dashOffset-1.);
-  diff = smoothstep(0.8, 1.0, diff);
-  diff += scrollRate;
-  float noise=snoise(vec2(uTime*0.5+counters*(20.),uTime*0.5+counters*(20.)));
-  pos.z +=(diff*.6 + 0.02)  *pow( (noise+1.)/2., 1.);
+  float diff = dashOffset-1.;
+  pos.z +=(diff*0.2 + 0.0)  * snoise(vec3(uTime*0.1,counters+pos.y*0.1,counters+pos.x*0.1));
   return pos;
 }
   `,
@@ -248,13 +244,11 @@ vec3 genColor(float random) {
     vec3 hsl = vec3(hue, saturation, lightness);
     return hsl2rgb(hsl);
 }
-float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-}
+
 vec3 genColorRgb(float random) {
     vec3 holePos = vec3(-0.7 ,0.,0.);
     float dist = distance(vPosition, holePos);
-    vec3 holePos2 = vec3(1. ,0.,0.);
+    vec3 holePos2 = vec3(0.7 ,0.,0.);
     float dist2 = distance(vPosition, holePos2);
     float distTarget = vPosition.x < 0. ? dist : dist2;
 
@@ -266,9 +260,9 @@ vec3 genColorRgb(float random) {
     
     float noise2 = snoise(vec2(vCounters*0.1,-3.));
     float noise3 = snoise(vec2(vCounters*10.,10.));
-    float noise4 = rand(vec2( vUV.x*10. , vUV.y*10.+uTime*0.5 ));
+    float posNoise = snoise(vPosition/2. - 8.);
 
-    noise4 = (noise4 - 0.5) * 1.;
+    
 
 
     float holeShadow =noise2 *  smoothstep(1. , 0.0, dist)  * 2.7  * smoothstep(1.2, PI, abs(AnglefromHole) );
@@ -299,13 +293,13 @@ vec3 genColorRgb(float random) {
     (noiseTime*0.5 + 0.5) );
 
 
-    vec3 yellow = vec3(0.17+noise4*0.2,1. ,0.8);
+    vec3 yellow = vec3(0.17, 0.5 ,0.7);
 
 
     vec3 hsl =  vec3(
-    colorVal+noise4*0.2,
+    colorVal,
     1. - colorVal*0.2, 
-    clamp(lightVal2 + smoothstep(0.3, 0.7,colorVal)*0.5, 0.09, 0.99) );
+    clamp(lightVal2 + smoothstep(0.3, 0.7,colorVal)*0.5, 0.04, 0.99) );
 
 
     return hsl2rgb(
@@ -337,9 +331,9 @@ vec3 genColorRgb(float random) {
         diffuseColor *= texture2D(map, vUV * repeat);
       }
     }
-    vec2 noiseCoord = vec2(vCounters * 1000000. + uTime*100., vUV.x * 1000000.);
-    float edgeNoise=snoise(noiseCoord);
-    edgeNoise = (edgeNoise + 1.0) * 0.5; // 0〜1に正規化
+    vec2 noiseCoord = vec2(vCounters * 15.0, vUV.x * 8.0);
+    float edgeNoise=0.;
+
     if (useAlphaMap == 1.) diffuseColor.a *= texture2D(alphaMap, vUV * repeat).a;
     if (diffuseColor.a < alphaTest) discard;
 
@@ -347,11 +341,13 @@ vec3 genColorRgb(float random) {
 
   if (useDash == 1.) {
  
-      diffuseColor.a *= ceil(mod(vCounters + dashOffset, dashArray) - (dashArray * dashRatio));
+      diffuseColor.a *= ceil(mod(vCounters + dashOffset-edgeNoise*0.05, dashArray) - (dashArray * dashRatio));
   };
 
- diffuseColor.a *= step(vUV.y, min(1., vCounters*50.));
-  diffuseColor.a *= clamp(100. - vCounters*100. , 0., 1.) ;
+  //diffuseColor.a *= min(1., vCounters*100.);
+  //diffuseColor.a *= clamp(100. - vCounters*100. , 0., 1.) ;
+ //diffuseColor.rgb = vec3(vCounters * 1.,0.,0.);
+//diffuseColor.a=1.;
     gl_FragColor = diffuseColor;
     
   }
@@ -391,7 +387,6 @@ export class MeshLineMaterial extends THREE.ShaderMaterial implements MeshLineMa
   resolution!: THREE.Vector2
   sizeAttenuation!: number
   dashArray!: number
-  scrollRate!: number
   dashOffset!: number
   dashRatio!: number
   useDash!: number
@@ -436,7 +431,6 @@ export class MeshLineMaterial extends THREE.ShaderMaterial implements MeshLineMa
         overlapOffset2: { value: new THREE.Vector2(0.75, 0.75) },
         overlapOpacity1: { value: 0.5 },
         overlapOpacity2: { value: 0.3 },
-        scrollRate: { value: 0.3 },
         overlapBlendMode: { value: 1 }, // multiply
         uDistortRate: { value: 0 }, // multiply
         uNoise: { value: 0 }, // multiply
@@ -467,15 +461,6 @@ export class MeshLineMaterial extends THREE.ShaderMaterial implements MeshLineMa
         },
         set(value) {
           this.uniforms.uTime.value = value
-        },
-      },
-      scrollRate: {
-        enumerable: true,
-        get() {
-          return this.uniforms.scrollRate.value
-        },
-        set(value) {
-          this.uniforms.scrollRate.value = value
         },
       },
       map: {
@@ -777,7 +762,6 @@ export class MeshLineMaterial extends THREE.ShaderMaterial implements MeshLineMa
     this.resolution.copy(source.resolution)
     this.sizeAttenuation = source.sizeAttenuation
     this.dashArray = source.dashArray
-    this.scrollRate = source.scrollRate
     this.dashOffset = source.dashOffset
     this.uRandomWidth = source.uRandomWidth
     this.dashRatio = source.dashRatio
