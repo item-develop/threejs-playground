@@ -2,7 +2,7 @@ import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
 import { BloomPass, EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh, lerp, solveLorenz } from '../Common/utils';
+import { getIsDark, getVh, lerp, solveLorenz } from '../Common/utils';
 import { MeshLineMaterial } from './CustomMeshLineMaterial';
 import { GUI } from 'lil-gui'
 import gsap from 'gsap';
@@ -36,6 +36,8 @@ export class Stage {
   scene: THREE.Scene | null = null;
   linesParam: { offsetInit: number; offsetScroll: number }[] = [];
 
+  isDark = getIsDark();
+
   constructor() {
     if (!this.isWebGLAvailable()) {
       return;
@@ -46,6 +48,11 @@ export class Stage {
     this.init();
     this.addObject();
     window.requestAnimationFrame(this.animate);
+
+
+    if (this.isDark) {
+      document.body.classList.add('dark');
+    }
   }
 
 
@@ -258,7 +265,7 @@ export class Stage {
     dofFolder.add(dofPass.uniforms.blurStrength, 'value', 0.0, 15.0, 0.5).name('Blur Strength');
     dofFolder.open();
 
-    
+
   }
 
   strech = (
@@ -545,7 +552,7 @@ export class Stage {
     this.renderer.setRenderTarget(this.depthRenderTarget);
     this.renderer.render(this.scene!, this.camera);
     this.renderer.setRenderTarget(null);
-    
+
     this.scene?.children.forEach((child) => {
       const material = (child as THREE.Mesh).material as MeshLineMaterial
       material.depthTest = false;

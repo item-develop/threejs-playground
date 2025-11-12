@@ -342,10 +342,14 @@ main {
 .oz-main {
   position: relative;
   z-index: 4;
-  
 }
 .oz-fv {
   height: 200vh;
+  svg {
+    path {
+      fill: currentColor;
+    }
+  }
   &__top {
     display: flex;
     align-items: flex-end;
@@ -365,8 +369,13 @@ main {
   margin-left: auto;
   margin-right: auto;
   height: 3000px;
-  img {
+  svg {
     width: 57vw;
+  }
+  svg {
+    path {
+      fill: currentColor;
+    }
   }
 }
 
@@ -385,4 +394,12 @@ main {
 .kura-story {
   height: 150vh;
   border-top: 2px solid black;
+}
+
+body {
+  color: black;
+  &.dark {
+    background-color: black;
+    color: white;
+  }
 }

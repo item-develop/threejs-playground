@@ -2,7 +2,7 @@ import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
 import { EffectComposer, OrbitControls } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh, lerp } from '../Common/utils';
+import { getIsDark, getVh, lerp } from '../Common/utils';
 import { MeshLineMaterial } from './CustomMeshLineMaterial';
 import { GUI } from 'lil-gui'
 import gsap from 'gsap';
@@ -96,6 +96,7 @@ export class Stage {
   }
 
 
+  isDark = getIsDark();
 
   raycastPlane!: THREE.Mesh;
   dummy!: THREE.Mesh;
@@ -121,7 +122,9 @@ export class Stage {
     this.scene = new THREE.Scene();
     //    this.scene!.background = new THREE.Color(0xffffff);
     this.gui = new GUI()
-
+    if (this.isDark) {
+      document.body.classList.add('dark');
+    }
 
     // camera GUI
     /*     this.gui!.add(this.camera.position, 'z')
@@ -205,7 +208,7 @@ export class Stage {
     // 初期条件
     //let x = 0.1 + i * 0.01 * Math.random();
     const getRandom = () => {
-      return (Math.random() - 0.5) * 10
+      return (Math.random() - 0.5) * 30
     }
     /* let x = getRandom() - 0
     let y = getRandom() - 30;

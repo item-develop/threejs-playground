@@ -2,7 +2,7 @@ import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
 import { EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh } from '../Common/utils';
+import { getIsDark, getVh } from '../Common/utils';
 import baseFrag from '../glsl/flame.frag?raw'
 import baseVert from '../glsl/base.vert?raw'
 import { MeshLineMaterial } from './CustomMeshLineMaterial';
@@ -52,7 +52,7 @@ export function generateDenseSpiral8(
             )
 
           );
-          console.log('points:', points);
+
         }
 
         break;
@@ -99,7 +99,6 @@ export function generateDenseSpiral8(
       + (isLeft ? (2 * y + 0.4) * (2 * y + 0.4) * 0.05 : -(y + 1) * (y + 1) * 0.1)
 
 
-    console.log('isNextRight:', isNextRight);
     const nextEdge = 0.15
     const isNextZ = isNextRight ?
       Math.sin(Math.min(2 * Math.PI * 3 / 4, (i % perCircle) / perCircle * 2 * Math.PI)) * nextEdge
@@ -107,7 +106,6 @@ export function generateDenseSpiral8(
     const isRightZ = isNextLeft ?
       -Math.sin(Math.min(2 * Math.PI * 3 / 4, (i % perCircle) / perCircle * 2 * Math.PI)) * nextEdge
       : -Math.sin((i % perCircle) / perCircle * 2 * Math.PI) * nextEdge
-    console.log('isNextZ:', isNextZ);
 
 
 
@@ -144,6 +142,7 @@ export class Stage {
   controls: OrbitControls | null = null;
   scene: THREE.Scene | null = null;
 
+  isDark = getIsDark();
   constructor() {
     if (!this.isWebGLAvailable()) {
       return;
@@ -154,6 +153,10 @@ export class Stage {
     this.init();
     this.addObject();
     window.requestAnimationFrame(this.animate);
+
+    if (this.isDark) {
+      document.body.classList.add('dark');
+    }
   }
 
   mouse = new THREE.Vector2(0, 0);
@@ -195,7 +198,6 @@ export class Stage {
     );
 
     this.scene = new THREE.Scene();
-    //this.scene!.background = new THREE.Color(0xffffff);
     this.gui = new GUI()
     this.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
     this.container.appendChild(this.renderer.domElement);
@@ -223,10 +225,11 @@ export class Stage {
   linesParamPrev: number[] = []
   createMeshLine = (initial: number) => {
     let points = generateDenseSpiral8(200, initial);
-    if (points.length > 300) {
+
+    if (points.length > 20) {
       //console.log('points.length:', points.length);
-      //points = points.slice(100 * Math.random(), points.length);
       //console.log('points.length2:', points.length);
+      points = points.slice(Math.floor((10) * Math.random()), points.length);
     }
     const curve = new THREE.CatmullRomCurve3(points);
     const length = curve.getLength();
@@ -273,7 +276,6 @@ export class Stage {
     const loop = 90
     for (var i = 0; i < loop; i++) {
       const initial = (((i + 0.0001) / loop) * 0.3234 + 0.2) % 1
-      console.log('initial:', initial);
       const meshLine = this.createMeshLine(
         initial
       );
@@ -370,13 +372,12 @@ export class Stage {
 
     this.trailMaterials.forEach((material, i) => {
       material.uTime = _time * 0.001
-      const offset = -sct / window.innerHeight + this.linesParam[i].offsetInit
+      const offset = -sct / window.innerHeight * this.linesParam[i].offsetInit + this.linesParam[i].offsetInit
       material.dashOffset = lerp(
         this.linesParamPrev[i] || 2,
         offset,
         0.1
       )
-      console.log('material.dashOffset:', material.dashOffset);
       this.linesParamPrev[i] = material.dashOffset
     })
 

@@ -334,3 +334,10 @@ export const solveLorenz = (a: number = 10, b: number = 28, c: number = 8 / 3, i
   //console.log('points[0].length:', points[0].length());
   return points;
 }
+
+export const getIsDark = () => {
+  const location = window.location.href;
+  const url = new URL(location);
+  const darkParam = url.searchParams.get("dark");
+  return darkParam === "true";
+}

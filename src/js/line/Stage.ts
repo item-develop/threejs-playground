@@ -2,7 +2,7 @@ import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
 import { EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh, lerp } from '../Common/utils';
+import { getIsDark, getVh, lerp } from '../Common/utils';
 import baseFrag from '../glsl/flame.frag?raw'
 import baseVert from '../glsl/base.vert?raw'
 import { MeshLineMaterial } from './CustomMeshLineMaterial';
@@ -62,6 +62,7 @@ export class Stage {
   controls: OrbitControls | null = null;
   scene: THREE.Scene | null = null;
   linesParam: { offsetInit: number; offsetScroll: number }[] = [];
+  isDark = getIsDark();
 
   constructor() {
     if (!this.isWebGLAvailable()) {
@@ -73,6 +74,10 @@ export class Stage {
     this.init();
     this.addObject();
     window.requestAnimationFrame(this.animate);
+
+    if (this.isDark) {
+      document.body.classList.add('dark');
+    }
   }
 
 
@@ -255,7 +260,6 @@ export class Stage {
       points.push(pos);
     }
 
-    console.log('points[0].length:', points[0].length());
 
     return points;
   }
@@ -329,7 +333,7 @@ export class Stage {
     this.trailMaterials.forEach((material, index) => {
       setTimeout(() => {
         this.strech(index)
-      }, 4000*Math.random());
+      }, 4000 * Math.random());
     })
 
 
