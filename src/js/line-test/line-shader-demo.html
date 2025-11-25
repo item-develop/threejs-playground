@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Line Shader Demo</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+    }
+    canvas {
+      display: block;
+    }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: monospace;
+      font-size: 14px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="info">
+    マウスドラッグで回転<br>
+    シンプルな線シェーダーデモ
+  </div>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+
+    // 頂点シェーダー
+    const vertexShader = `
+      precision highp float;
+      
+      const float PI = 3.14159265358979;
+      
+      uniform float uTime;
+      uniform float uWidth;
+      uniform vec2 uResolution;
+      uniform vec2 uMouse;
+      
+      attribute vec3 aPrev;
+      attribute vec3 aNext;
+      attribute float aSide;
+      attribute float aAlpha;
+      
+      varying float vAlpha;
+      varying float vSide;
+      
+      mat3 rotate3d(float angle, vec3 axis) {
+        vec3 a = normalize(axis);
+        float s = sin(angle);
+        float c = cos(angle);
+        float r = 1.0 - c;
+        return mat3(
+          a.x * a.x * r + c,
+          a.y * a.x * r + a.z * s,
+          a.z * a.x * r - a.y * s,
+          a.x * a.y * r - a.z * s,
+          a.y * a.y * r + c,
+          a.z * a.y * r + a.x * s,
+          a.x * a.z * r + a.y * s,
+          a.y * a.z * r - a.x * s,
+          a.z * a.z * r + c
+        );
+      }
+      
+      void main() {
+        // マウスによる回転
+        vec2 mouse = uMouse * 0.5;
+        vec4 pos = vec4(position, 1.0);
+        pos.xyz *= rotate3d(mouse.x, vec3(0.0, 1.0, 0.0));
+        pos.xyz *= rotate3d(mouse.y, vec3(1.0, 0.0, 0.0));
+        
+        vec4 prev = vec4(aPrev, 1.0);
+        prev.xyz *= rotate3d(mouse.x, vec3(0.0, 1.0, 0.0));
+        prev.xyz *= rotate3d(mouse.y, vec3(1.0, 0.0, 0.0));
+        
+        vec4 next = vec4(aNext, 1.0);
+        next.xyz *= rotate3d(mouse.x, vec3(0.0, 1.0, 0.0));
+        next.xyz *= rotate3d(mouse.y, vec3(1.0, 0.0, 0.0));
+        
+        // ビュー・プロジェクション変換
+        vec4 currMV = modelViewMatrix * pos;
+        vec4 prevMV = modelViewMatrix * prev;
+        vec4 nextMV = modelViewMatrix * next;
+        
+        vec4 clipCurr = projectionMatrix * currMV;
+        vec4 clipPrev = projectionMatrix * prevMV;
+        vec4 clipNext = projectionMatrix * nextMV;
+        
+        // NDC空間に変換
+        vec2 ndcCurr = clipCurr.xy / max(clipCurr.w, 1e-6);
+        vec2 ndcPrev = clipPrev.xy / max(clipPrev.w, 1e-6);
+        vec2 ndcNext = clipNext.xy / max(clipNext.w, 1e-6);
+        
+        // 線の方向を計算
+        vec2 dirA = normalize(ndcCurr - ndcPrev);
+        vec2 dirB = normalize(ndcNext - ndcCurr);
+        
+        // 端点の処理
+        if (length(dirA) < 1e-5) dirA = dirB;
+        if (length(dirB) < 1e-5) dirB = dirA;
+        
+        // マイター結合の計算
+        float cosTheta = clamp(dot(dirA, dirB), -1.0, 1.0);
+        vec2 normalB = vec2(-dirB.y, dirB.x);
+        
+        vec2 offsetDir;
+        float pixelLen;
+        
+        if (cosTheta > 0.995) {
+          // ほぼ直線の場合
+          offsetDir = normalB;
+          pixelLen = uWidth;
+        } else {
+          // 角度がある場合はマイター結合
+          vec2 tangent = normalize(dirA + dirB);
+          vec2 miter = vec2(-tangent.y, tangent.x);
+          vec2 normalA = vec2(-dirA.y, dirA.x);
+          float denom = max(dot(miter, normalA), 1e-4);
+          pixelLen = uWidth / denom;
+          
+          float crossZ = dirA.x * dirB.y - dirA.y * dirB.x;
+          bool isInner = (crossZ * aSide) < 0.0;
+          const float MITER_LIMIT = 2.0;
+          bool overLimit = pixelLen > (uWidth * MITER_LIMIT);
+          
+          if (isInner || overLimit) {
+            offsetDir = normalB;
+            pixelLen = uWidth;
+          } else {
+            offsetDir = miter;
+          }
+        }
+        
+        // NDC空間でのピクセル単位オフセット
+        vec2 ndcPerPixel = 2.0 / uResolution;
+        vec2 ndcOffset = -offsetDir * aSide * pixelLen * ndcPerPixel;
+        
+        vec4 clip = clipCurr;
+        clip.xy += ndcOffset * clip.w; // 遠近補正
+        
+        gl_Position = clip;
+        
+        vAlpha = aAlpha;
+        vSide = aSide;
+      }
+    `;
+
+    // フラグメントシェーダー
+    const fragmentShader = `
+      precision highp float;
+      
+      uniform float uTime;
+      uniform vec3 uColor;
+      
+      varying float vAlpha;
+      varying float vSide;
+      
+      void main() {
+        // エッジをソフトに
+        float edge = smoothstep(0.8, 1.0, abs(vSide));
+        float alpha = 1.0 - edge;
+        
+        // グラデーション効果
+        vec3 color = mix(uColor, uColor * 1.5, vAlpha);
+        
+        gl_FragColor = vec4(color, alpha * 0.8);
+      }
+    `;
+
+    // ラインジオメトリを作成する関数
+    function createLineGeometry(points) {
+      const positions = [];
+      const prevPositions = [];
+      const nextPositions = [];
+      const sides = [];
+      const alphas = [];
+      const indices = [];
+      
+      const numPoints = points.length;
+      
+      for (let i = 0; i < numPoints; i++) {
+        const curr = points[i];
+        const prev = i > 0 ? points[i - 1] : points[i];
+        const next = i < numPoints - 1 ? points[i + 1] : points[i];
+        
+        const alpha = i / (numPoints - 1);
+        
+        // 各点から2つの頂点を作成（両側）
+        for (let side = 0; side < 2; side++) {
+          positions.push(curr.x, curr.y, curr.z);
+          prevPositions.push(prev.x, prev.y, prev.z);
+          nextPositions.push(next.x, next.y, next.z);
+          sides.push(side === 0 ? 1 : -1);
+          alphas.push(alpha);
+        }
+        
+        // インデックス（四角形を2つの三角形に）
+        if (i < numPoints - 1) {
+          const base = i * 2;
+          indices.push(base, base + 1, base + 2);
+          indices.push(base + 2, base + 1, base + 3);
+        }
+      }
+      
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('aPrev', new THREE.Float32BufferAttribute(prevPositions, 3));
+      geometry.setAttribute('aNext', new THREE.Float32BufferAttribute(nextPositions, 3));
+      geometry.setAttribute('aSide', new THREE.Float32BufferAttribute(sides, 1));
+      geometry.setAttribute('aAlpha', new THREE.Float32BufferAttribute(alphas, 1));
+      geometry.setIndex(indices);
+      
+      return geometry;
+    }
+
+    // シーンのセットアップ
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 5;
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    // マウス操作
+    const mouse = new THREE.Vector2(0, 0);
+    let isDragging = false;
+    
+    renderer.domElement.addEventListener('mousedown', () => isDragging = true);
+    renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+    renderer.domElement.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        mouse.x += e.movementX * 0.01;
+        mouse.y += e.movementY * 0.01;
+      }
+    });
+    
+    // タッチ操作
+    let lastTouch = null;
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      lastTouch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    });
+    renderer.domElement.addEventListener('touchend', () => {
+      isDragging = false;
+      lastTouch = null;
+    });
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (isDragging && lastTouch) {
+        const touch = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        mouse.x += (touch.x - lastTouch.x) * 0.01;
+        mouse.y += (touch.y - lastTouch.y) * 0.01;
+        lastTouch = touch;
+      }
+    });
+
+    // 複数の線を作成
+    const lines = [];
+    
+    // スパイラル
+    const spiralPoints = [];
+    for (let i = 0; i < 100; i++) {
+      const t = i / 99;
+      const angle = t * Math.PI * 4;
+      const radius = t * 2;
+      spiralPoints.push(new THREE.Vector3(
+        Math.cos(angle) * radius,
+        Math.sin(angle) * radius,
+        t * 2 - 1
+      ));
+    }
+    
+    const spiralGeometry = createLineGeometry(spiralPoints);
+    const spiralMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uWidth: { value: 3 },
+        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        uMouse: { value: mouse },
+        uColor: { value: new THREE.Color(0x00ffff) }
+      },
+      vertexShader,
+      fragmentShader,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const spiralLine = new THREE.Mesh(spiralGeometry, spiralMaterial);
+    scene.add(spiralLine);
+    lines.push({ mesh: spiralLine, material: spiralMaterial });
+    
+    // 波形
+    const wavePoints = [];
+    for (let i = 0; i < 80; i++) {
+      const t = i / 79;
+      const x = (t - 0.5) * 4;
+      wavePoints.push(new THREE.Vector3(
+        x,
+        Math.sin(x * 3) * 0.5,
+        Math.cos(x * 2) * 0.5
+      ));
+    }
+    
+    const waveGeometry = createLineGeometry(wavePoints);
+    const waveMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uWidth: { value: 4 },
+        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        uMouse: { value: mouse },
+        uColor: { value: new THREE.Color(0xff00ff) }
+      },
+      vertexShader,
+      fragmentShader,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const waveLine = new THREE.Mesh(waveGeometry, waveMaterial);
+    waveLine.position.y = 1;
+    scene.add(waveLine);
+    lines.push({ mesh: waveLine, material: waveMaterial });
+    
+    // らせん（縦）
+    const helixPoints = [];
+    for (let i = 0; i < 60; i++) {
+      const t = i / 59;
+      const angle = t * Math.PI * 6;
+      helixPoints.push(new THREE.Vector3(
+        Math.cos(angle) * 0.8,
+        t * 3 - 1.5,
+        Math.sin(angle) * 0.8
+      ));
+    }
+    
+    const helixGeometry = createLineGeometry(helixPoints);
+    const helixMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uWidth: { value: 5 },
+        uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        uMouse: { value: mouse },
+        uColor: { value: new THREE.Color(0xffff00) }
+      },
+      vertexShader,
+      fragmentShader,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const helixLine = new THREE.Mesh(helixGeometry, helixMaterial);
+    helixLine.position.x = -2;
+    scene.add(helixLine);
+    lines.push({ mesh: helixLine, material: helixMaterial });
+
+    // アニメーションループ
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      const time = performance.now() * 0.001;
+      
+      lines.forEach(({ material }) => {
+        material.uniforms.uTime.value = time;
+      });
+      
+      renderer.render(scene, camera);
+    }
+
+    // リサイズ対応
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      
+      const resolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
+      lines.forEach(({ material }) => {
+        material.uniforms.uResolution.value = resolution;
+      });
+    });
+
+    animate();
+  </script>
+</body>
+</html>
