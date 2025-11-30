@@ -425,7 +425,7 @@ body {
   }
   &-2 {
     transform-style: preserve-3d;
-    animation: rotate 10s linear infinite -1s;
+    animation: rotate 10s linear infinite reverse -1s;
     img {
       transform: rotateX(40deg) rotateZ(-3deg) rotateY(-5deg);
     }
