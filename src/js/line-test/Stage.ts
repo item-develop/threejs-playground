@@ -89,6 +89,7 @@ const vertexShader = `
       
       uniform float uTime;
       uniform float uWidth;
+      uniform float uInitRate;
       uniform vec2 uResolution;
       uniform vec2 uMouse;
       uniform float uStart;
@@ -140,11 +141,13 @@ const vertexShader = `
   //diff += scrollRate;
   
   float posDist = length(pos - holePos);
-  float noise=snoise(vec2(uTime*0.2+aProgress*(0.2) + posDist ,uTime*0.2+aProgress*(0.2) + posDist ));
+  float noise=snoise(vec2(uTime*(0.2   )+aProgress*(0.2) + posDist ,uTime*0.2+aProgress*(0.2) + posDist ));
 
   vec3 fromCenterNormal = normalize(pos);
 
-  pos.xyz += fromCenterNormal*   uDistort* (2.*diff2+1.) * 1.*sin((diff*.1     )  *noise);
+  pos.xyz +=  ((1.-uInitRate) *10.*(1.-aProgress) + 2.*(1.-uEnd)  + 2.*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * 1.*sin((diff*.1     )  *noise);
+  pos.xyz *= uInitRate;
+   // pos.xy += 2. * fromCenterNormal.xy *  smoothstep(1., 0., posDist );
   //pos.x +=uDistort* (2.*diff2+1.) * 1.*cos((diff*.1     )  *noise);
   return pos;
 }
@@ -155,7 +158,7 @@ const vertexShader = `
         float show = 0.0;
         
         
-        if (aProgress >= uStart && aProgress < uEnd) {
+        if (aProgress >= uStart && aProgress < uEnd  && aProgress >0.005 ) {
           show = 1.0;
         }
         
@@ -669,7 +672,7 @@ export class Stage {
       //duration: 1,
       duration: isAdd ? 15 : 5,
       delay: Math.random() * 1,
-      ease: isAdd ? 'power2.out' : 'power2.inOut',
+      ease: isAdd ? 'power2.out' : 'power4.inOut',
       onComplete: () => {
         /*  gsap.to(material, {
            dashOffset: 0,
@@ -712,12 +715,13 @@ export class Stage {
     const spiralMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uWidth: { value: 0.3 + Math.random() * 1 },
+        uWidth: { value: 0.3 + Math.random() * 0.6 },
         uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
         uColor: { value: new THREE.Color(0x00ffff) },
         uStart: { value: 0.0 },
         scrollRate: { value: 0.0 },
         uEnd: { value: 1.0 },
+        uInitRate: { value: 0 },
         uDistort: { value: i === 0 ? 1 : 0.1 },
       },
       vertexShader,
@@ -802,6 +806,8 @@ export class Stage {
 
     setTimeout(() => {
 
+
+
       setInterval(() => {
         this.addLine()
       }, 500);
@@ -809,8 +815,16 @@ export class Stage {
 
       this.trailMaterials.forEach((material, index) => {
         this.strech(index)
-
       })
+
+
+      gsap.to(this.initRate, {
+        value: 1,
+        duration: 5,
+        ease: 'power3.out',
+      })
+
+
 
     }, 1000);
 
@@ -904,8 +918,9 @@ export class Stage {
       const material = (child as THREE.Mesh).material as any
       material.uniforms.uTime.value = _time * 0.001
 
-      const offset = (-scrollRate) * this.linesParam[i].offsetInit
-        + this.linesParam[i].offsetInit
+      const _offset = this.linesParam[i]?.offsetInit || 2
+      const offset = (-scrollRate) * _offset
+        + _offset
       //      console.log('offset:', offset);
 
       /* material.dashOffset = clamp(lerp(
@@ -919,6 +934,7 @@ export class Stage {
       //console.log('material.uniforms.uEnd.value:', material.uniforms.uEnd.value);
 
       material.uniforms.scrollRate.value = scrollRate;
+      material.uniforms.uInitRate.value = this.initRate.value;
 
 
 
@@ -936,6 +952,9 @@ export class Stage {
     this.renderer.render(this.scene!, this.camera);
   }
 
+  initRate = {
+    value: 0
+  }
   private isWebGLAvailable(): boolean {
     try {
       const canvas = document.createElement('canvas');
