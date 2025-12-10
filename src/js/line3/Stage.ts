@@ -479,7 +479,7 @@ export class Stage {
     this.camera.position.lerpVectors(
       this.camera.position,
       new THREE.Vector3(
-        this.baseCameraPos.x + 1 + mouseAdd.x,
+        this.baseCameraPos.x + 0.5 + mouseAdd.x,
         mouseAdd.y,
         1 + mouseAdd.z
       ), // 原点

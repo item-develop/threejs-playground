@@ -9,6 +9,25 @@ import { MeshLineMaterial } from './CustomMeshLineMaterial';
 import { depth } from 'three/tsl';
 import { GUI } from 'lil-gui'
 import gsap from 'gsap';
+import { snoise } from './const';
+import { clamp } from 'three/src/math/MathUtils.js';
+
+
+function getRandomIndexOfOne(arr: number[]): number | null {
+  // 値が1である要素のインデックスを全て取得
+  const indicesOfOne = arr
+    .map((value, index) => value === 1 ? index : -1)
+    .filter(index => index !== -1);
+
+  // 1が存在しない場合はnullを返す
+  if (indicesOfOne.length === 0) {
+    return null;
+  }
+
+  // ランダムにインデックスを選択
+  const randomIndex = Math.floor(Math.random() * indicesOfOne.length);
+  return indicesOfOne[randomIndex];
+}
 
 export function catmullRomInterpolate(
   controlPoints: THREE.Vector3[],
@@ -73,7 +92,9 @@ const vertexShader = `
       uniform vec2 uResolution;
       uniform vec2 uMouse;
       uniform float uStart;
+      uniform float scrollRate;
       uniform float uEnd;
+      uniform float uDistort;
       
       attribute vec3 aPrev;
       attribute vec3 aNext;
@@ -84,7 +105,11 @@ const vertexShader = `
       varying float vSide;
       varying float vShow;
       varying vec2 vUv;
+      varying vec3 vPosition;
       
+        ${snoise}
+
+
       mat3 rotateY(float angle) {
         float s = sin(angle);
         float c = cos(angle);
@@ -104,20 +129,42 @@ const vertexShader = `
           0.0, s, c
         );
       }
+
+       vec3 convertPositions(vec3 pos) {
+
+    vec3 holePos = vec3(-0.3 ,0.2,0.);
+
+  float diff1 = abs(uEnd-1.) * 3.;
+  float diff2 = abs(uStart) * 2.;
+  float diff = diff1 + diff2;
+  //diff += scrollRate;
+  
+  float posDist = length(pos - holePos);
+  float noise=snoise(vec2(uTime*0.2+aProgress*(0.2) + posDist ,uTime*0.2+aProgress*(0.2) + posDist ));
+
+  vec3 fromCenterNormal = normalize(pos);
+
+  pos.xyz += fromCenterNormal*   uDistort* (2.*diff2+1.) * 1.*sin((diff*.1     )  *noise);
+  //pos.x +=uDistort* (2.*diff2+1.) * 1.*cos((diff*.1     )  *noise);
+  return pos;
+}
+
       
       void main() {
         // 表示範囲の計算
         float show = 0.0;
-        float fadeWidth = 0.05; // フェードの幅
         
-        if (aProgress >= uStart && aProgress <= uEnd) {
+        
+        if (aProgress >= uStart && aProgress < uEnd) {
           show = 1.0;
         }
         
         // マウスによる回転
         vec3 pos = position;
+        pos = convertPositions(pos);
         vec3 prev = aPrev;
         vec3 next = aNext;
+        
         
         pos = rotateY(uMouse.x) * pos;
         pos = rotateX(uMouse.y) * pos;
@@ -161,12 +208,13 @@ const vertexShader = `
         vProgress = aProgress;
         vSide = aSide;
         vShow = show;
+        vPosition = pos;
         vUv = vec2(aProgress, aSide); // progress(0-1), side(-1 to 1)
       }
     `;
 
 // フラグメントシェーダー
-const fragmentShader = `
+const fragmentShaderSimple = `
       precision highp float;
       
       uniform vec3 uColor;
@@ -176,6 +224,8 @@ const fragmentShader = `
       varying float vProgress;
       varying float vSide;
       varying float vShow;
+      varying vec3 vPosition;
+
       
       varying vec2 vUv; // 追加: セグメント内のUV座標
       
@@ -194,7 +244,169 @@ const fragmentShader = `
         // 進捗に応じたグラデーション
         alpha *= step(uStart, vProgress);
         alpha *= smoothstep(uEnd, uEnd - fadeWidth, vProgress);
-        gl_FragColor = vec4(uColor, alpha);
+
+
+        vec3 color = uColor;
+
+        
+        color = vec3(1.0, 0.5, 0.0); // オレンジ色に設定
+        color.r = vProgress;
+        color.g = vPosition.x + 0.5;
+
+        gl_FragColor = vec4(color, alpha);
+      }
+    `;
+const fragmentShader = `
+      precision highp float;
+      
+      uniform vec3 uColor;
+      uniform float uStart;
+      uniform float uEnd;
+      uniform float uTime;
+      
+      varying float vProgress;
+      varying float vSide;
+      varying float vShow;
+      varying vec3 vPosition;
+
+        ${snoise}
+
+        
+  vec3 hsl2rgb(vec3 hsl) {
+    float h = hsl.x;
+    float s = hsl.y;
+    float l = hsl.z;
+    
+    float c = (1.0 - abs(2.0 * l - 1.0)) * s;
+    float x = c * (1.0 - abs(mod(h * 6.0, 2.0) - 1.0));
+    float m = l - c * 0.5;
+    
+    vec3 rgb;
+    if (h < 1.0 / 6.0) {
+        rgb = vec3(c, x, 0.0);
+    } else if (h < 2.0 / 6.0) {
+        rgb = vec3(x, c, 0.0);
+    } else if (h < 3.0 / 6.0) {
+        rgb = vec3(0.0, c, x);
+    } else if (h < 4.0 / 6.0) {
+        rgb = vec3(0.0, x, c);
+    } else if (h < 5.0 / 6.0) {
+        rgb = vec3(x, 0.0, c);
+    } else {
+        rgb = vec3(c, 0.0, x);
+    }
+    
+    return rgb + vec3(m);
+}
+    
+        float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+      
+        vec3 genColorRgb(float random) {
+
+        vec2 vUV = vec2(vProgress, vSide);
+    vec3 holePos = vec3(-0.3 ,0.2,0.);
+    float dist = distance(vPosition, holePos);
+    vec3 holePos2 = vec3(1. ,0.,0.);
+    float dist2 = distance(vPosition, holePos2);
+    float distTarget = vPosition.x < 0. ? dist : dist2;
+
+    float PI = 3.14159;
+    float AnglefromHole = atan(  vPosition.x - holePos.x, vPosition.y - holePos.y) ;
+    
+    float noise = snoise(vec2(vProgress*20.,3.));
+    float uTotalLength = 10.0;
+
+    // 黄色の乗り方が変わった
+    float posDist = distance(vPosition, holePos);
+    float noiseTime = snoise(vec2(1., uTotalLength * -posDist*1. + uTime*0.3 + vProgress*1. ));
+    
+    float noise2 = snoise(vec2(vProgress*0.1,-3.));
+    float noise3 = snoise(vec2(vProgress*100.,10.));
+    float noise4 = rand(vec2( vUV.x*10. , vUV.y*10.+uTime*0.5 ));
+
+    noise4 = (noise4 - 0.5) * 1.;
+
+
+    float holeShadow =smoothstep(1. , 0.0, dist)  * .3  ;
+
+
+
+    
+    float diffX = abs(vPosition.x - holePos2.x);
+
+    float holeShadow2 =  smoothstep(1. , 0.0, dist2 )  * 1. * smoothstep(-PI, PI, abs(AnglefromHole) );
+    
+    float holeShadow3 =  smoothstep(0.8 , 0.0,  diffX)  * 0.2 * abs(max(0., -vPosition.y));
+
+
+
+    float lightVal2 =
+    (vPosition.y) * 0.2 * (noise3*0.5 +0.5)
+    - (vPosition.x) * 0.04
+    
+    + 0.35
+    
+    - max(0.,holeShadow)   
+    - max(0.,holeShadow2)  
+    - max(0.,holeShadow3);
+
+    float colorVal = mix(
+    0.24 - vPosition.y*0.12 + vPosition.x*0.05,
+    0.58 - vPosition.y * (vPosition.y<0.?-0.1: -0.2) ,
+    (noiseTime*0.5 + 0.5) );
+
+
+    vec3 yellow = vec3(0.17+noise4*0.,1. ,0.8);
+
+
+    vec3 hsl =  vec3(
+    colorVal+noise4*0.,
+    1. - colorVal*0.2, 
+    clamp(lightVal2 + smoothstep(0.3, 0.7,colorVal)*0.5, 0.09, 0.99) );
+
+
+    return hsl2rgb(
+
+    mix(hsl, yellow, smoothstep(0.3, 0.1, colorVal) )
+    
+    
+    );
+
+}
+
+
+      varying vec2 vUv; // 追加: セグメント内のUV座標
+      
+      void main() {
+        // 表示範囲外は破棄
+        if (vShow < 0.01) {
+          discard;
+        }
+        
+        float alpha = 1.0;
+        // 進捗に応じたグラデーション
+        // 
+        
+        
+        alpha *= step(uStart, vProgress);
+        //alpha *= step((vProgress)*100., 1.);
+
+        // alpha*=smoothstep(0.,0.01,vProgress);
+
+        vec3 color = uColor;
+
+          color.rgb = genColorRgb(
+    snoise(vec3(vProgress, vPosition.x, vPosition.y))
+    );
+        // color = vec3(1.0, 0.5, 0.0); // オレンジ色に設定
+        // color.r = vProgress;
+        // color.g = vPosition.x + 0.5;
+
+        //color= vec3(1.0, .0, .0);
+        gl_FragColor = vec4(color, alpha);
       }
     `;
 
@@ -269,6 +481,7 @@ export class Stage {
     this.addObject();
     window.requestAnimationFrame(this.animate);
 
+
     if (this.isDark) {
       document.body.classList.add('dark');
     }
@@ -289,6 +502,11 @@ export class Stage {
   raycastPlane!: THREE.Mesh;
   dummy!: THREE.Mesh;
   gui: GUI | null = null;
+
+  baseCameraPos = new THREE.Vector3(
+    -1.8, 0, 1.8
+  );
+
   private init(): void {
     this.container = document.createElement('div');
     document.body.appendChild(this.container);
@@ -307,39 +525,22 @@ export class Stage {
     );
 
     this.scene = new THREE.Scene();
-    //    this.scene!.background = new THREE.Color(0xffffff);
+
+
     this.gui = new GUI()
 
 
-    // camera GUI
-    /*     this.gui!.add(this.camera.position, 'z')
-          .name('Camera Position Z')
-          .listen()
-        this.gui!.add(this.camera.position, 'x')
-          .name('Camera Position X')
-          .listen()
-        this.gui!.add(this.camera.position, 'y')
-          .name('Camera Position Y')
-          .listen()
-    
-        this.gui!.add(this.camera.up, 'x')
-          .name('Camera Up X')
-          .listen()
-        this.gui!.add(this.camera.up, 'y')
-          .name('Camera Up Y')
-          .listen()
-        this.gui!.add(this.camera.up, 'z')
-          .name('Camera Up Z')
-          .listen()
-     */
-
     this.camera.rotateX(-Math.PI / 10);
     this.camera.updateMatrix();
-    this.camera.position.set(0, 0, 5);
+    this.camera.position.set(-2, 0, 1.4);
+    this.camera.up.set(
+      3.2, 0.2, 0
+    )
     this.camera.updateMatrix();
 
+
     const axisHelper = new THREE.AxesHelper(5);
-    //this.scene.add(axisHelper);
+    //    this.scene.add(axisHelper);
 
 
     this.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
@@ -349,15 +550,126 @@ export class Stage {
     this.container.appendChild(this.stats.dom);
   }
 
+
+
+
+  // ローレンツ方程式を解く関数
+  private solveLorenz(a: number = 10, b: number = 28, c: number = 8 / 3, i = 0): THREE.Vector3[] {
+    const points: THREE.Vector3[] = [];
+
+    // 初期条件
+    //let x = 0.1 + i * 0.01 * Math.random();
+    const getRandom = () => {
+      return (Math.random() - 0.5) * 20
+    }
+    /* let x = getRandom() - 0
+    let y = getRandom() - 30;
+    let z = 20; */
+    /* let x = getRandom() + 30;
+    let y = getRandom() + 15;
+    let z = getRandom() + 30; */
+    let x = getRandom() - 3;
+    let y = getRandom() + 5;
+    let z = getRandom() + 30;
+
+
+    // 時間刻み幅と計算ステップ数
+    const dt = 0.005;
+    const steps = 3000;
+
+    const distances = []
+    // ルンゲ・クッタ法（4次）で数値積分
+    for (let i = 0; i < steps; i++) {
+
+      // k1
+      const k1x = a * (y - x);
+      const k1y = x * (b - z) - y;
+      const k1z = x * y - c * z;
+
+      // k2
+      const x2 = x + k1x * dt / 2;
+      const y2 = y + k1y * dt / 2;
+      const z2 = z + k1z * dt / 2;
+      const k2x = a * (y2 - x2);
+      const k2y = x2 * (b - z2) - y2;
+      const k2z = x2 * y2 - c * z2;
+
+      // k3
+      const x3 = x + k2x * dt / 2;
+      const y3 = y + k2y * dt / 2;
+      const z3 = z + k2z * dt / 2;
+      const k3x = a * (y3 - x3);
+      const k3y = x3 * (b - z3) - y3;
+      const k3z = x3 * y3 - c * z3;
+
+      // k4
+      const x4 = x + k3x * dt;
+      const y4 = y + k3y * dt;
+      const z4 = z + k3z * dt;
+      const k4x = a * (y4 - x4);
+      const k4y = x4 * (b - z4) - y4;
+      const k4z = x4 * y4 - c * z4;
+
+      // 更新
+      x += (k1x + 2 * k2x + 2 * k3x + k4x) * dt / 6;
+      y += (k1y + 2 * k2y + 2 * k3y + k4y) * dt / 6;
+      z += (k1z + 2 * k2z + 2 * k3z + k4z) * dt / 6;
+
+      // スケーリングして3D空間に配置（見やすいサイズに調整）
+
+      const scale = 0.067;
+      const pos = new THREE.Vector3(y * scale - 0.5, x * - scale + -0.1, -z * scale + 1.9)
+      // 
+      // X軸のベクトル
+      const axis = new THREE.Vector3(1, 0, 0);
+      const angle = Math.PI / 2; // 45度
+      pos.applyAxisAngle(axis, angle);
+      const axis2 = new THREE.Vector3(0, 1, 0);
+      const angle2 = Math.PI / 1.16; // 45度
+      pos.applyAxisAngle(axis2, angle2);
+      //pos.x += pos.x > 0 ? pos.x * 0.5 : 0;
+      //pos.z += pos.x > 0 ? pos.x * 0.2 : 0;
+      const dis = pos.length()
+      /* if (dis > 1.7 && pos.x < 0) {
+        distances.push(0);
+        points.push(
+          new THREE.Vector3(0, 0, 0)
+        );
+      } else {
+      } */
+      distances.push(dis);
+      points.push(pos);
+
+    }
+
+    const hamkdashi = points.filter(el => {
+      const dis = el.length()
+      return (dis > 1.6 && el.x < 0)
+      //|| dis > 2.1 && el.x > 0
+    })
+    console.log('hamkdashi:', hamkdashi);
+    const largeDistance = Math.max(...distances);
+    //console.log('largeDistance:', largeDistance);
+
+    //console.log('points[0].length:', points[0].length());
+    if (hamkdashi.length > 0) {
+      console.log('hamkdashi found!');
+      return this.solveLorenz(a, b, c, i + 1);
+    }
+    return points;
+  }
+
   strech = (
-    index: number
+    index: number,
+    isAdd = false
   ) => {
+
     gsap.to(this.linesParam[index], {
       offsetInit: 1,
       //duration: 1,
-      duration: 5,
-      //delay: Math.random() * 0,
-      ease: 'power3.inOut',
+      duration: isAdd ? 15 : 5,
+      delay: Math.random() * 1,
+      ease: isAdd ? 'power2.out' : 'power2.inOut',
       onComplete: () => {
         /*  gsap.to(material, {
            dashOffset: 0,
@@ -373,6 +685,7 @@ export class Stage {
 
 
   }
+
   getViewport() {
     const distance = this.camera.position.z;
     const vFov = this.camera.fov * Math.PI / 180;
@@ -386,41 +699,120 @@ export class Stage {
 
   effectComposer: EffectComposer | null = null;
 
-  addObject = () => {
+  createMeshLine = (i: number) => {
+    const lorenzPoints = this.solveLorenz(7, 28, 8 / 3, i * 1);
 
+    this.linesParam.push({
+      offsetInit: 2,
+      offsetScroll: 0,
+    })
 
-
-    // 1. シンプルなスパイラル
-    const spiralPoints = [];
-    for (let i = 0; i < 10; i++) {
-      const t = i / 9;
-      const angle = t * Math.PI * 3;
-      const radius = t * 1.5;
-      spiralPoints.push(new THREE.Vector3(
-        Math.cos(angle) * radius - 1.5,
-        Math.sin(angle) * radius,
-        0
-      ));
-    }
-
-    const spiralGeometry = createLineGeometry(catmullRomInterpolate(spiralPoints, 10));
-    this.spiralMaterial = new THREE.ShaderMaterial({
+    //const spiralGeometry = createLineGeometry(catmullRomInterpolate(lorenzPoints, 5000));
+    const spiralGeometry = createLineGeometry(lorenzPoints);
+    const spiralMaterial = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uWidth: { value: 8 },
+        uWidth: { value: 0.3 + Math.random() * 1 },
         uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
         uColor: { value: new THREE.Color(0x00ffff) },
         uStart: { value: 0.0 },
-        uEnd: { value: 1.0 }
+        scrollRate: { value: 0.0 },
+        uEnd: { value: 1.0 },
+        uDistort: { value: i === 0 ? 1 : 0.1 },
       },
       vertexShader,
       fragmentShader,
-      side: THREE.DoubleSide
+      //side: THREE.DoubleSide,
+      /* transparent: true,
+      depthWrite: true,
+      depthTest: true, */
+      transparent: true,
+      depthWrite: true,
+      depthTest: true,
+      //blending: THREE.AdditiveBlending,
     });
 
-    const spiralLine = new THREE.Mesh(spiralGeometry, this.spiralMaterial);
-    this.scene!.add(spiralLine);
+    const spiralLine = new THREE.Mesh(spiralGeometry, spiralMaterial);
 
+
+    this.trailMaterials.push(spiralMaterial);
+    //    spiralLine.frustumCulled = false; // カリング無効化
+    this.meshes.push(spiralLine);
+    return spiralLine;
+
+
+  }
+  meshes: THREE.Mesh[] = [];
+  addLine = () => {
+    const meshLine = this.createMeshLine(0);
+    this.scene!.add(meshLine);
+    this.strech(this.trailMaterials.length - 1, true);
+    this.removeLine();
+  }
+
+  removingIndexs: number[] = []
+
+
+  removeLine = () => {
+    console.log('this.scene?.children.length:', this.scene?.children.length);
+    console.log('this.linesParam.map(param => param.offsetInit):', this.linesParam.map(param => param.offsetInit));
+    const randomIndex = getRandomIndexOfOne(this.linesParam.map(param => param.offsetInit));
+    console.log('randomIndex:', randomIndex);
+    if (randomIndex === null) {
+      return;
+    }
+    this.removingIndexs.push(randomIndex);
+    const materialToRemove = this.trailMaterials[randomIndex];
+
+    const removeMesh = this.meshes[randomIndex];
+
+    gsap.to(this.linesParam[randomIndex], {
+      offsetInit: 0,
+      //duration: 1,
+      duration: 15,
+      //delay: Math.random() * 0,
+      ease: 'linear',
+      onComplete: () => {
+        const currentRemoveIndex = this.meshes.map(mesh => mesh.id).indexOf(removeMesh.id);
+        this.scene!.remove(removeMesh);
+        this.linesParam.splice(currentRemoveIndex, 1);
+        this.linesParamPrev.splice(currentRemoveIndex, 1);
+        this.trailMaterials.splice(currentRemoveIndex, 1);
+        this.meshes.splice(currentRemoveIndex, 1);
+        removeMesh.geometry.dispose();
+        materialToRemove.dispose();
+        this.removingIndexs = this.removingIndexs.filter(index => index !== currentRemoveIndex);
+      }
+    })
+
+
+
+
+  }
+
+  addObject = () => {
+
+    for (var i = 0; i < 100; i++) {
+      //if (i === 4) {
+      const meshLine = this.createMeshLine(i);
+      this.scene!.add(meshLine);
+    }
+
+
+
+    setTimeout(() => {
+
+      setInterval(() => {
+        this.addLine()
+      }, 500);
+      console.log('this.linesParam:', this.linesParam);
+
+      this.trailMaterials.forEach((material, index) => {
+        this.strech(index)
+
+      })
+
+    }, 1000);
 
   }
 
@@ -464,6 +856,38 @@ export class Stage {
   linesParamPrev: number[] = []
 
   private render(_time: number): void {
+    this.mouseLerp.x = lerp(this.mouseLerp.x, this.mouse.x, 0.05);
+    this.mouseLerp.y = lerp(this.mouseLerp.y, this.mouse.y, 0.05);
+
+    const mouseDistance = Math.sqrt(this.mouseLerp.x * this.mouseLerp.x + this.mouseLerp.y * this.mouseLerp.y);
+
+    const speed = 1
+    const sct = Math.min(window.scrollY, window.innerHeight * 2);
+    const scrollRate = sct / (window.innerHeight * 1)
+    const mouseAdd = new THREE.Vector3(
+      + 0.2 + Math.sin(speed * _time * 0.0005) * 0.1 + this.mouseLerp.y * 0.1,
+      - 0 + Math.cos(speed * _time * 0.001) * 0.15 + this.mouseLerp.x * 0.1,
+      + Math.cos(speed * _time * 0.0003) * 0.1 + 0.1 + mouseDistance * 0.1,
+    )
+    this.camera.position.set(
+      this.baseCameraPos.x + mouseAdd.x,
+      this.baseCameraPos.y + mouseAdd.y,
+      this.baseCameraPos.z + mouseAdd.z,
+    );
+
+
+
+
+    this.camera.position.lerpVectors(
+      this.camera.position,
+      new THREE.Vector3(
+        this.baseCameraPos.x + 0.5 + mouseAdd.x,
+        mouseAdd.y,
+        1 + mouseAdd.z
+      ), // 原点
+      scrollRate
+    );
+
 
     if (this.controls) {
       //this.controls.update();
@@ -476,10 +900,33 @@ export class Stage {
     this.camera.matrixAutoUpdate = true;
 
 
+    this.scene?.children.forEach((child, i) => {
+      const material = (child as THREE.Mesh).material as any
+      material.uniforms.uTime.value = _time * 0.001
+
+      const offset = (-scrollRate) * this.linesParam[i].offsetInit
+        + this.linesParam[i].offsetInit
+      //      console.log('offset:', offset);
+
+      /* material.dashOffset = clamp(lerp(
+        material.dashOffset,
+        offset,
+        1
+      ), 0, 2) */
+      const dashOffset = offset
+      material.uniforms.uStart.value = scrollRate
+      material.uniforms.uEnd.value = clamp(2 - dashOffset, 0, 1)
+      //console.log('material.uniforms.uEnd.value:', material.uniforms.uEnd.value);
+
+      material.uniforms.scrollRate.value = scrollRate;
 
 
-    this.spiralMaterial.uniforms.uEnd.value = _time * 0.0003 % 1.0;
-    console.log('this.spiralMaterial.uniforms.uEnd.value:', this.spiralMaterial.uniforms.uEnd.value);
+
+    })
+
+
+
+
     /* 
         this.trailMaterial.dashOffset = 1;
         if (this.trailMaterial.dashOffset > 1) {

@@ -246,7 +246,7 @@ export class Stage {
       color: 0x000000,
     });
     this.cMesh = new THREE.Mesh(cylinder, cylinderMat);
-    this.scene.add(this.cMesh);
+    ///this.scene.add(this.cMesh);
 
     //this.mouseBallMesh.castShadow = true;
 
@@ -353,6 +353,7 @@ export class Stage {
 
     // diff を元に回転
     this.mouseBallMesh.rotation.x += diff * 2
+    this.mouseBallMesh.visible = false
 
     this.mouseBallBody.position.y = 0.35
     this.mouseBallBody.position.x = 0
@@ -362,7 +363,7 @@ export class Stage {
     this.BoxFish.animate(time);
     this.BoxBlock.animate(time);
     // 物理シミュレーションを更新
-    this.updatePhysics(deltaTime);
+    //this.updatePhysics(deltaTime);
 
     // コントロールを更新
     //    this.controls!.update();
