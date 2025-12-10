@@ -133,7 +133,7 @@ const vertexShader = `
 
        vec3 convertPositions(vec3 pos) {
 
-    vec3 holePos = vec3(-0.3 ,0.2,0.);
+    vec3 holePos = vec3(-0.3 ,0.2,0.) * uInitRate;
 
   float diff1 = abs(uEnd-1.) * 3.;
   float diff2 = abs(uStart) * 2.;
@@ -238,6 +238,7 @@ const fragmentShaderSimple = `
           discard;
         }
         
+        
         // 先端を丸くする処理
         float fadeWidth = 0.03;
         float alpha = 1.0;
@@ -266,6 +267,7 @@ const fragmentShader = `
       uniform float uStart;
       uniform float uEnd;
       uniform float uTime;
+      uniform float uInitRate;
       
       varying float vProgress;
       varying float vSide;
@@ -310,7 +312,7 @@ const fragmentShader = `
         vec3 genColorRgb(float random) {
 
         vec2 vUV = vec2(vProgress, vSide);
-    vec3 holePos = vec3(-0.3 ,0.2,0.);
+    vec3 holePos = vec3(-0.3 ,0.2,0.) * uInitRate;
     float dist = distance(vPosition, holePos);
     vec3 holePos2 = vec3(1. ,0.,0.);
     float dist2 = distance(vPosition, holePos2);
@@ -389,6 +391,14 @@ const fragmentShader = `
           discard;
         }
         
+    vec3 holePos = vec3(-0.3 ,0.2,0.) * uInitRate;
+    float dist = distance(vPosition, holePos);
+
+
+        if (vUv.y<2.2 - dist*3. ) {
+          discard;
+        }
+
         float alpha = 1.0;
         // 進捗に応じたグラデーション
         // 
@@ -524,7 +534,7 @@ export class Stage {
     this.renderer.setPixelRatio(
       window.innerWidth < 767 ? 4 :
         Math.min(4096
-          / window.innerWidth, 3)
+          / window.innerWidth, 4)
     );
 
     this.scene = new THREE.Scene();
@@ -671,7 +681,7 @@ export class Stage {
       offsetInit: 1,
       //duration: 1,
       duration: isAdd ? 15 : 5,
-      delay: Math.random() * 1,
+      //delay: Math.random() * 1,
       ease: isAdd ? 'power2.out' : 'power4.inOut',
       onComplete: () => {
         /*  gsap.to(material, {
@@ -908,7 +918,7 @@ export class Stage {
 
 
 
-    console.log('this.camera.position:', this.camera.position);
+    console.log('this.camera:', this.camera);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     this.camera.matrixAutoUpdate = true;
@@ -919,7 +929,7 @@ export class Stage {
       material.uniforms.uTime.value = _time * 0.001
 
       const _offset = this.linesParam[i]?.offsetInit || 2
-      const offset = (-scrollRate) * _offset
+      const offset = this.initRate.value * (-scrollRate) * _offset
         + _offset
       //      console.log('offset:', offset);
 
