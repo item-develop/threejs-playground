@@ -650,13 +650,13 @@ export class Stage {
       return (dis > 1.6 && el.x < 0)
       //|| dis > 2.1 && el.x > 0
     })
-    console.log('hamkdashi:', hamkdashi);
+
     const largeDistance = Math.max(...distances);
-    //console.log('largeDistance:', largeDistance);
+
 
     //console.log('points[0].length:', points[0].length());
     if (hamkdashi.length > 0) {
-      console.log('hamkdashi found!');
+
       return this.solveLorenz(a, b, c, i + 1);
     }
     return points;
@@ -811,7 +811,6 @@ export class Stage {
       setInterval(() => {
         this.addLine()
       }, 500);
-      console.log('this.linesParam:', this.linesParam);
 
       this.trailMaterials.forEach((material, index) => {
         this.strech(index)
@@ -909,6 +908,7 @@ export class Stage {
 
 
 
+    console.log('this.camera.position:', this.camera.position);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     this.camera.matrixAutoUpdate = true;
