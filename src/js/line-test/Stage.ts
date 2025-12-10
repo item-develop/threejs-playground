@@ -141,7 +141,7 @@ const vertexShader = `
   //diff += scrollRate;
   
   float posDist = length(pos - holePos);
-  float noise=snoise(vec2(uTime*(0.2   )+aProgress*(0.2) + posDist ,uTime*0.2+aProgress*(0.2) + posDist ));
+  float noise=snoise(vec2(uTime*(0.2   )+aProgress*(10.2)  ,uTime*0.2+aProgress*(10.2)  ));
 
   vec3 fromCenterNormal = normalize(pos);
 
@@ -918,7 +918,7 @@ export class Stage {
 
 
 
-    console.log('this.camera:', this.camera);
+    //console.log('this.camera:', this.camera);
     this.camera.lookAt(new THREE.Vector3(0, 0, 0));
 
     this.camera.matrixAutoUpdate = true;
@@ -947,7 +947,7 @@ export class Stage {
       material.uniforms.uInitRate.value = this.initRate.value;
 
 
-
+      //console.log('material.uniforms.uInitRate.value:', material.uniforms.uInitRate.value);
     })
 
 
