@@ -145,8 +145,10 @@ const vertexShader = `
 
   vec3 fromCenterNormal = normalize(pos);
 
-  pos.xyz +=  ((1.-uInitRate) *10.*(1.-aProgress) + 2.*(1.-uEnd)  + 2.*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * 1.*sin((diff*.1     )  *noise);
+  float oku = 1.5 * smoothstep(-1.2, 1.5, pos.x );
+  pos.xyz +=  ((1.-uInitRate) *10.*(1.-aProgress) + 2.*(1.-uEnd)  + 2.*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
   pos.xyz *= uInitRate;
+  //pos.xyz += pos.x;
    // pos.xy += 2. * fromCenterNormal.xy *  smoothstep(1., 0., posDist );
   //pos.x +=uDistort* (2.*diff2+1.) * 1.*cos((diff*.1     )  *noise);
   return pos;
@@ -575,15 +577,13 @@ export class Stage {
     const getRandom = () => {
       return (Math.random() - 0.5) * 20
     }
-    /* let x = getRandom() - 0
-    let y = getRandom() - 30;
-    let z = 20; */
-    /* let x = getRandom() + 30;
-    let y = getRandom() + 15;
-    let z = getRandom() + 30; */
+
     let x = getRandom() - 3;
     let y = getRandom() + 5;
-    let z = getRandom() + 30;
+    let z = getRandom() + 35;
+    /* let x = getRandom() - 3;
+    let y = getRandom() + 5;
+    let z = getRandom() + 30; */
 
 
     // 時間刻み幅と計算ステップ数
@@ -666,9 +666,32 @@ export class Stage {
 
     //console.log('points[0].length:', points[0].length());
     if (hamkdashi.length > 0) {
-
       return this.solveLorenz(a, b, c, i + 1);
     }
+    // 頭100を削除
+    console.log('points.length:', points.length);
+    return this.trimPointsToValidEnd(points).filter((_, index) => index > 50);
+  }
+  private trimPointsToValidEnd(points: THREE.Vector3[]): THREE.Vector3[] {
+    if (points.length === 0) return points;
+
+    // 最後の点から逆順に探索
+    for (let i = points.length - 1; i >= 0; i--) {
+      const point = points[i];
+      const distance = point.length();
+
+
+      if (point.y > 0.4) {
+        // この点までを返す（この点を含む）
+
+        return points.slice(0, i + 1);
+      } else {
+        // console.log('point:', point);
+      }
+    }
+
+    // 条件を満たす点が見つからなかった場合は元の配列を返す
+    console.log('9999:', 9999);
     return points;
   }
 
@@ -680,9 +703,9 @@ export class Stage {
     gsap.to(this.linesParam[index], {
       offsetInit: 1,
       //duration: 1,
-      duration: isAdd ? 15 : 5,
+      duration: isAdd ? 25 : 5,
       //delay: Math.random() * 1,
-      ease: isAdd ? 'power2.out' : 'power4.inOut',
+      ease: isAdd ? 'linear' : 'power4.inOut',
       onComplete: () => {
         /*  gsap.to(material, {
            dashOffset: 0,
@@ -768,10 +791,10 @@ export class Stage {
 
 
   removeLine = () => {
-    console.log('this.scene?.children.length:', this.scene?.children.length);
-    console.log('this.linesParam.map(param => param.offsetInit):', this.linesParam.map(param => param.offsetInit));
     const randomIndex = getRandomIndexOfOne(this.linesParam.map(param => param.offsetInit));
-    console.log('randomIndex:', randomIndex);
+    console.log('this.scene?.children.length:', this.scene?.children.length);
+    //console.log('this.linesParam.map(param => param.offsetInit):', this.linesParam.map(param => param.offsetInit));
+    //console.log('randomIndex:', randomIndex);
     if (randomIndex === null) {
       return;
     }
@@ -817,9 +840,10 @@ export class Stage {
     setTimeout(() => {
 
 
-
-      setInterval(() => {
-        this.addLine()
+      setTimeout(() => {
+        setInterval(() => {
+          this.addLine()
+        }, 1000);
       }, 500);
 
       this.trailMaterials.forEach((material, index) => {
@@ -886,7 +910,7 @@ export class Stage {
 
     const speed = 1
     const sct = Math.min(window.scrollY, window.innerHeight * 2);
-    const scrollRate = sct / (window.innerHeight * 1)
+    const scrollRate = sct / (window.innerHeight * 1.5)
     const mouseAdd = new THREE.Vector3(
       + 0.2 + Math.sin(speed * _time * 0.0005) * 0.1 + this.mouseLerp.y * 0.1,
       - 0 + Math.cos(speed * _time * 0.001) * 0.15 + this.mouseLerp.x * 0.1,
