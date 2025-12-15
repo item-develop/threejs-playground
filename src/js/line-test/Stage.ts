@@ -792,7 +792,7 @@ export class Stage {
     this.strech(this.trailMaterials.length - 1, true);
 
 
-    if (this.linesParam.length > 140) {
+    if (this.linesParam.length > 130) {
       this.removeLine();
     }
     /*     this.removeLine();
@@ -861,8 +861,8 @@ export class Stage {
       setTimeout(() => {
         setInterval(() => {
           this.addLine()
-        }, 1000);
-      }, 3500);
+        }, 500);
+      }, 500);
 
       this.trailMaterials.forEach((material, index) => {
         this.strech(index)
