@@ -847,7 +847,7 @@ export class Stage {
 
   addObject = () => {
 
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 130; i++) {
       //if (i === 4) {
       const meshLine = this.createMeshLine(i);
       this.scene!.add(meshLine);
