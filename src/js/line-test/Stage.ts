@@ -138,7 +138,7 @@ const vertexShader = `
   float diff1 = abs(uEnd-1.) * 3.;
   float diff2 = abs(uStart) * 2.;
   float diff = diff1 + diff2;
-  //diff += scrollRate;
+  diff += scrollRate*0.;
   
   float posDist = length(pos - holePos);
   float noise=snoise(vec2(uTime*(0.2   )+aProgress*(10.2)  ,uTime*0.2+aProgress*(10.2)  ));
@@ -147,7 +147,7 @@ const vertexShader = `
   vec3 fromCenterNormal = normalize(pos);
 
   float oku = 1.5 * smoothstep(-1.2, 1.5, pos.x );
-  pos.xyz +=  ((1.-uInitRate) *20. + 2.*(1.-uEnd)  + 0.5*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
+  pos.xyz +=  (scrollRate *2. + (1.-uInitRate) *20. + 2.*(1.-uEnd)  + 0.5*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
 
   //pos.xyz *=  (uInitRate)*(noise2+1.) *0.2;
 
@@ -981,7 +981,7 @@ export class Stage {
         1
       ), 0, 2) */
       const dashOffset = offset
-      material.uniforms.uStart.value = Math.max(0, (1 - offset)) + scrollRate
+      material.uniforms.uStart.value = Math.max(0, (1 - offset))
 
       material.uniforms.uEnd.value = clamp(2 - dashOffset, 0, 1)
 
