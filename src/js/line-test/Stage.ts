@@ -332,8 +332,11 @@ const fragmentShader = `
     float uTotalLength = 10.0;
 
     // 黄色の乗り方が変わった
-    float posDist = distance(vPosition, holePos);
-    float noiseTime = snoise(vec2(1., uTotalLength * -posDist*1. + uTime*0.3 + vProgress*1. ));
+    float border = 0.7;
+    float posDist = distance(vPosition, holePos) ;
+    float noiseTime = snoise(vec2(1., uTotalLength * -posDist*1. + uTime*0.3 + vProgress*1. ))
+    
+    * smoothstep( border,border-1., vPosition.x-vPosition.z) ;
     
     float noise2 = snoise(vec2(vProgress*0.1,-3.));
     float noise3 = snoise(vec2(vProgress*100.,10.));
