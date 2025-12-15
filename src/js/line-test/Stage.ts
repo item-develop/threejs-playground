@@ -165,7 +165,7 @@ const vertexShader = `
         float show = 0.0;
         
         
-        if (aProgress >= uStart && aProgress < uEnd  && aProgress >0.005 ) {
+        if (aProgress >= uStart && aProgress < uEnd  && aProgress >0.00 ) {
           show = 1.0;
         }
         
@@ -580,7 +580,7 @@ export class Stage {
     // 初期条件
     //let x = 0.1 + i * 0.01 * Math.random();
     const getRandom = () => {
-      return (Math.random() - 0.5) * 20
+      return (Math.random() - 0.5) * 40
     }
 
     let x = getRandom() - 3;
@@ -708,7 +708,7 @@ export class Stage {
     gsap.to(this.linesParam[index], {
       offsetInit: 1,
       //duration: 1,
-      duration: isAdd ? 20 : 5,
+      duration: isAdd ? 20 : 7,
       //delay: Math.random() * 1,
       ease: isAdd ? 'linear' : 'power2.inOut',
       onComplete: () => {
@@ -862,7 +862,7 @@ export class Stage {
         setInterval(() => {
           this.addLine()
         }, 1000);
-      }, 500);
+      }, 3500);
 
       this.trailMaterials.forEach((material, index) => {
         this.strech(index)
@@ -871,7 +871,7 @@ export class Stage {
 
       gsap.to(this.initRate, {
         value: 1,
-        duration: 10,
+        duration: 8,
         ease: 'power2.out',
       })
 
