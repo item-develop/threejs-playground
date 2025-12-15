@@ -142,12 +142,17 @@ const vertexShader = `
   
   float posDist = length(pos - holePos);
   float noise=snoise(vec2(uTime*(0.2   )+aProgress*(10.2)  ,uTime*0.2+aProgress*(10.2)  ));
+  float noise2=snoise(vec2(uTime*(10.2   )+pos.x*(10.2)  ,uTime*0.2+pos.y*(10.2)  ));
 
   vec3 fromCenterNormal = normalize(pos);
 
   float oku = 1.5 * smoothstep(-1.2, 1.5, pos.x );
-  pos.xyz +=  ((1.-uInitRate) *10.*(1.-aProgress) + 2.*(1.-uEnd)  + 2.*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
-  pos.xyz *= uInitRate;
+  pos.xyz +=  ((1.-uInitRate) *20. + 2.*(1.-uEnd)  + 0.5*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
+
+  //pos.xyz *=  (uInitRate)*(noise2+1.) *0.2;
+
+  //pos.xyz *= uInitRate*0.5 + 0.5;
+  
   //pos.xyz += pos.x;
    // pos.xy += 2. * fromCenterNormal.xy *  smoothstep(1., 0., posDist );
   //pos.x +=uDistort* (2.*diff2+1.) * 1.*cos((diff*.1     )  *noise);
@@ -482,7 +487,7 @@ export class Stage {
   private stats!: Stats;
   controls: OrbitControls | null = null;
   scene: THREE.Scene | null = null;
-  linesParam: { offsetInit: number; offsetScroll: number }[] = [];
+  linesParam: { offsetInit: number; offsetScroll: number, meshId: number }[] = [];
   isDark = getIsDark();
 
   constructor() {
@@ -669,7 +674,7 @@ export class Stage {
       return this.solveLorenz(a, b, c, i + 1);
     }
     // 頭100を削除
-    console.log('points.length:', points.length);
+
     return this.trimPointsToValidEnd(points).filter((_, index) => index > 50);
   }
   private trimPointsToValidEnd(points: THREE.Vector3[]): THREE.Vector3[] {
@@ -703,9 +708,9 @@ export class Stage {
     gsap.to(this.linesParam[index], {
       offsetInit: 1,
       //duration: 1,
-      duration: isAdd ? 25 : 5,
+      duration: isAdd ? 20 : 5,
       //delay: Math.random() * 1,
-      ease: isAdd ? 'linear' : 'power4.inOut',
+      ease: isAdd ? 'linear' : 'power2.inOut',
       onComplete: () => {
         /*  gsap.to(material, {
            dashOffset: 0,
@@ -738,10 +743,6 @@ export class Stage {
   createMeshLine = (i: number) => {
     const lorenzPoints = this.solveLorenz(7, 28, 8 / 3, i * 1);
 
-    this.linesParam.push({
-      offsetInit: 2,
-      offsetScroll: 0,
-    })
 
     //const spiralGeometry = createLineGeometry(catmullRomInterpolate(lorenzPoints, 5000));
     const spiralGeometry = createLineGeometry(lorenzPoints);
@@ -772,6 +773,11 @@ export class Stage {
     const spiralLine = new THREE.Mesh(spiralGeometry, spiralMaterial);
 
 
+    this.linesParam.push({
+      offsetInit: 2,
+      offsetScroll: 0,
+      meshId: spiralLine.id,
+    })
     this.trailMaterials.push(spiralMaterial);
     //    spiralLine.frustumCulled = false; // カリング無効化
     this.meshes.push(spiralLine);
@@ -784,7 +790,19 @@ export class Stage {
     const meshLine = this.createMeshLine(0);
     this.scene!.add(meshLine);
     this.strech(this.trailMaterials.length - 1, true);
-    this.removeLine();
+
+
+    if (this.linesParam.length > 140) {
+      this.removeLine();
+    }
+    /*     this.removeLine();
+        this.removeLine();
+        this.removeLine();
+        this.removeLine();
+        this.removeLine();
+        this.removeLine();
+        this.removeLine(); */
+
   }
 
   removingIndexs: number[] = []
@@ -853,8 +871,8 @@ export class Stage {
 
       gsap.to(this.initRate, {
         value: 1,
-        duration: 5,
-        ease: 'power3.out',
+        duration: 10,
+        ease: 'power2.out',
       })
 
 
@@ -963,8 +981,10 @@ export class Stage {
         1
       ), 0, 2) */
       const dashOffset = offset
-      material.uniforms.uStart.value = scrollRate
+      material.uniforms.uStart.value = Math.max(0, (1 - offset)) + scrollRate
+
       material.uniforms.uEnd.value = clamp(2 - dashOffset, 0, 1)
+
       //console.log('material.uniforms.uEnd.value:', material.uniforms.uEnd.value);
 
       material.uniforms.scrollRate.value = scrollRate;
