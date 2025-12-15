@@ -147,7 +147,7 @@ const vertexShader = `
   vec3 fromCenterNormal = normalize(pos);
 
   float oku = 1.5 * smoothstep(-1.2, 1.5, pos.x );
-  pos.xyz +=  (scrollRate *2. + (1.-uInitRate) *20. + 2.*(1.-uEnd)  + 0.5*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
+  pos.xyz +=  (scrollRate *0.1 + (1.-uInitRate) *20. + 2.*(1.-uEnd)  + 0.5*(uStart)  )* fromCenterNormal*   uDistort* (2.*diff2+1.) * oku * sin((diff*.1     )  *noise);
 
   //pos.xyz *=  (uInitRate)*(noise2+1.) *0.2;
 
