@@ -97,8 +97,8 @@ export class BoxBlock {
           mass: 100,
           shape: boxShape,
           position: new CANNON.Vec3(
-            x * 1.2, 
-            posY, 
+            x * 1.2,
+            posY,
             z * 0.4 + (storyTop - window.innerHeight / 2) / this.getWindowRate())
         });
         this.initialBoxes[boxMesh.uuid] = {
@@ -114,8 +114,8 @@ export class BoxBlock {
         boxBody.quaternion.toEuler(euler);
         euler.x = 0;
         euler.y = 0;
-        //euler.y = -Math.PI * x / 20;
         euler.z = 0;
+
         boxBody.quaternion.setFromEuler(euler.x, euler.y, euler.z);
 
 

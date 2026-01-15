@@ -401,13 +401,16 @@ const fragmentShader = `
           discard;
         }
         
-    vec3 holePos = vec3(-0.3 ,0.2,0.) * uInitRate;
+    vec3 holePos = vec3(-0.34 ,-0.05,0.5) ;
     float dist = distance(vPosition, holePos);
 
 
-        if (vUv.y<2.2 - dist*3. ) {
-          discard;
-        }
+        //if (vUv.y<2.2 - dist*10. ) {
+        //  discard;
+        //}
+        //if (0.2 > dist ) {
+        //  discard;
+        //}
 
         float alpha = 1.0;
         // 進捗に応じたグラデーション
@@ -665,7 +668,14 @@ export class Stage {
 
     const hamkdashi = points.filter(el => {
       const dis = el.length()
-      return (dis > 1.6 && el.x < 0)
+
+      const holePos = new THREE.Vector3(-0.34 ,-0.05,0.5);
+      const holeDist = el.distanceTo(holePos);
+      if(holeDist < 0.2){
+
+//        console.log('holeDist:', holeDist);
+      }
+      return (dis > 1.6 && el.x < 0)|| holeDist < 0.2
       //|| dis > 2.1 && el.x > 0
     })
 

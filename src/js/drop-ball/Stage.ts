@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
-import { getVh, lerp } from '../Common/utils';
+import { clamp, getVh, lerp } from '../Common/utils';
 import * as CANNON from 'cannon-es';
 import { BoxFish } from './BoxFish';
 import { BoxBlock } from './BoxBlock';
@@ -246,7 +246,7 @@ export class Stage {
       color: 0x000000,
     });
     this.cMesh = new THREE.Mesh(cylinder, cylinderMat);
-    ///this.scene.add(this.cMesh);
+    this.scene.add(this.cMesh);
 
     //this.mouseBallMesh.castShadow = true;
 
@@ -287,13 +287,13 @@ export class Stage {
     for (let i = 0; i < this.bodies.length; i++) {
 
       if (this.mouseBallMesh.uuid === this.meshes[i].uuid) {
-        const cPos =
+        const shdowPos =
           new THREE.Vector3(
             this.bodies[i].position.x - 0.3,
             0,
             this.bodies[i].position.z + 0.3
           );
-        this.cMesh.position.copy(cPos);
+        this.cMesh.position.copy(shdowPos);
         this.meshes[i].position.copy(this.bodies[i].position);
       } else {
         this.meshes[i].position.copy(this.bodies[i].position);
@@ -340,20 +340,29 @@ export class Stage {
     this.camera.position.z = sct
     this.camera.lookAt(new THREE.Vector3(0, 0, this.camera.position.z));
 
+
+
+
+    console.log('this.mouseBallBody.position.z:', this.mouseBallBody.position.z);
+    const diffOrigin = Math.abs(this.mouseBallBody.position.z - sct)
+    console.log('diffOrigin:', diffOrigin);
     const nextZ = lerp(
       this.mouseBallBody.position.z,
       sct,
-      0.02
+      clamp(0.02 + diffOrigin * 0.001, 0.01, 0.2)
     )
+    console.log('nextZ:', nextZ);
     const diff = nextZ - this.mouseBallBody.position.z
 
-    console.log('diff:', diff);
+    //console.log('diff:', diff);
+    //console.log('sct:', sct);
+    //console.log('this.mouseBallBody.position.z:', this.mouseBallBody.position.z);
 
     this.mouseBallBody.position.z = nextZ
 
     // diff を元に回転
     this.mouseBallMesh.rotation.x += diff * 2
-    this.mouseBallMesh.visible = false
+    //this.mouseBallMesh.visible = false
 
     this.mouseBallBody.position.y = 0.35
     this.mouseBallBody.position.x = 0
@@ -363,7 +372,7 @@ export class Stage {
     this.BoxFish.animate(time);
     this.BoxBlock.animate(time);
     // 物理シミュレーションを更新
-    //this.updatePhysics(deltaTime);
+    this.updatePhysics(deltaTime);
 
     // コントロールを更新
     //    this.controls!.update();
