@@ -15,23 +15,23 @@ const createNoiseMaterial = (noiseTexture: THREE.Texture) => {
 
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uNoiseTexture = { value: noiseTexture };
-    shader.uniforms.uNoiseScale = { value: 0.5 };
-    shader.uniforms.uNoiseOpacity = { value: 0.3 };
+    shader.uniforms.uNoiseScale = { value: 500.05 };
+    shader.uniforms.uNoiseOpacity = { value: 0.2 };
 
     shader.vertexShader = shader.vertexShader.replace(
       '#include <common>',
       `
         #include <common>
-        varying vec3 vWorldPosition;
-        varying vec3 vWorldNormal;
+        varying vec3 vLocalPosition;
+        varying vec3 vLocalNormal;
       `
     );
     shader.vertexShader = shader.vertexShader.replace(
       '#include <worldpos_vertex>',
       `
         #include <worldpos_vertex>
-        vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
-        vWorldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+        vLocalPosition = position;  // ローカル座標をそのまま使う
+        vLocalNormal = normal;      // ローカル法線
       `
     );
 
@@ -42,37 +42,40 @@ const createNoiseMaterial = (noiseTexture: THREE.Texture) => {
         uniform sampler2D uNoiseTexture;
         uniform float uNoiseScale;
         uniform float uNoiseOpacity;
-        varying vec3 vWorldPosition;
-        varying vec3 vWorldNormal;
+        varying vec3 vLocalPosition;
+        varying vec3 vLocalNormal;
       `
     );
 
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <dithering_fragment>',
       `
-        // Triplanar blending
-        vec3 blending = abs(vWorldNormal);
-        blending = normalize(max(blending, 0.00001));
-        blending /= (blending.x + blending.y + blending.z);
-        
-        // 3方向から投影
-        float noiseX = texture2D(uNoiseTexture, vWorldPosition.yz * uNoiseScale).r;
-        float noiseY = texture2D(uNoiseTexture, vWorldPosition.xz * uNoiseScale).r;
-        float noiseZ = texture2D(uNoiseTexture, vWorldPosition.xy * uNoiseScale).r;
-        
-        // ブレンド
-        float noise = noiseX * blending.x + noiseY * blending.y + noiseZ * blending.z;
-        
-        gl_FragColor.rgb *= (1.0 - uNoiseOpacity + noise * uNoiseOpacity);
-        
-        #include <dithering_fragment>
-      `
+    vec3 absNormal = abs(vLocalNormal);
+    vec2 noiseUV;
+    
+    // 最も強い法線方向に応じてUVを選択
+    if (absNormal.z >= absNormal.x && absNormal.z >= absNormal.y) {
+      // Z方向を向いている面（上面・底面）→ XY平面でマッピング
+      noiseUV = vLocalPosition.xy * uNoiseScale;
+    } else if (absNormal.y >= absNormal.x) {
+      // Y方向を向いている面 → XZ平面
+      noiseUV = vLocalPosition.xz * uNoiseScale;
+    } else {
+      // X方向を向いている面 → YZ平面
+      noiseUV = vLocalPosition.yz * uNoiseScale;
+    }
+    
+    float noise = texture2D(uNoiseTexture, noiseUV).r;
+    
+    gl_FragColor.rgb *= (1.0 - uNoiseOpacity + noise * uNoiseOpacity);
+    
+    #include <dithering_fragment>
+  `
     );
   };
 
   return material;
 };
-
 export class Stage {
   private container!: HTMLDivElement;
   private camera!: THREE.PerspectiveCamera;
@@ -103,7 +106,7 @@ export class Stage {
     document.body.appendChild(this.container);
 
     // cameraPosNormalize
-    this.cameraPos.normalize().multiplyScalar(10);
+    this.cameraPos.normalize().multiplyScalar(12);
 
     this.getCanvasSize()
     this.camera = new THREE.PerspectiveCamera(
@@ -143,7 +146,7 @@ export class Stage {
 
     noise.wrapS = THREE.RepeatWrapping;
     noise.wrapT = THREE.RepeatWrapping;
-    noise.repeat.set(500, 500);
+    noise.repeat.set(300, 300);
     noise.magFilter = THREE.NearestFilter;
 
 
@@ -151,11 +154,11 @@ export class Stage {
     light.position.set(-2, 10, -2);
     this.scene!.add(light);
 
-    const direLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    const direLight = new THREE.DirectionalLight(0xffffff, 1);
     direLight.position.set(-10, 0, 4);
     this.scene!.add(direLight);
 
-    const envLight = new THREE.AmbientLight(0x7522F5, 5.2);
+    const envLight = new THREE.AmbientLight(0x7500F5, 6.2);
     this.scene!.add(envLight);
 
     const envLight2 = new THREE.AmbientLight(0xffffff, 0.4);
@@ -240,7 +243,7 @@ export class Stage {
     y: 0
   }
   private animate = (time: number): void => {
-    this.controls?.update();
+    //this.controls?.update();
     requestAnimationFrame(this.animate);
     this.render(time);
     console.log('Mouse:', Mouse.coords);
@@ -250,10 +253,13 @@ export class Stage {
     const cameraByMouse = new THREE.Vector3(
       this.cameraPos.x + this.lerpMouse.x * 1,
       this.cameraPos.y,
-      this.cameraPos.z + this.lerpMouse.y * 1
+      this.cameraPos.z - this.lerpMouse.y * 1
     );
-    this.camera.position.lerp(cameraByMouse, 0.05);
-    this.camera.lookAt(new THREE.Vector3(0, 3, 0));
+    //this.camera.position.lerp(cameraByMouse, 0.05);
+    this.camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+
+
 
     Mouse.update();
     // rotation logo
@@ -261,6 +267,10 @@ export class Stage {
     if (this.logoMesh) {
       // this.logoMesh.rotation.y = time * 0.0002
       // this.logoMesh.rotation.x = time * 0.0001
+
+      this.logoMesh.rotation.x = -this.lerpMouse.y * 0.5;
+      //this.logoMesh.rotation.y = this.lerpMouse.y * 0.5;
+      this.logoMesh.rotation.z = -this.lerpMouse.x * 0.5;
     }
 
     this.stats.update();
