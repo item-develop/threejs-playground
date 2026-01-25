@@ -1,17 +1,17 @@
-import { MeshLine } from 'three.meshline' // 一時的にコメントアウト
 import * as THREE from 'three';
 import { EffectComposer, OrbitControls, RenderPass, ShaderPass } from 'three/examples/jsm/Addons.js';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { getIsDark, getVh, lerp } from '../Common/utils';
-import baseFrag from '../glsl/flame.frag?raw'
-import baseVert from '../glsl/base.vert?raw'
-import { MeshLineMaterial } from './CustomMeshLineMaterial';
-import { depth } from 'three/tsl';
 import { GUI } from 'lil-gui'
 import gsap from 'gsap';
 import { snoise } from './const';
 import { clamp } from 'three/src/math/MathUtils.js';
+import Simulation from './Simulation';
 
+import face_vert from "./glsl/sim/face.vert";
+import color_frag from "./glsl/sim/color.frag?raw";
+import Common from './Common';
+import Mouse from './Mouse';
 
 function getRandomIndexOfOne(arr: number[]): number | null {
   // 値が1である要素のインデックスを全て取得
@@ -223,50 +223,6 @@ const vertexShader = `
       }
     `;
 
-// フラグメントシェーダー
-const fragmentShaderSimple = `
-      precision highp float;
-      
-      uniform vec3 uColor;
-      uniform float uStart;
-      uniform float uEnd;
-      
-      varying float vProgress;
-      varying float vSide;
-      varying float vShow;
-      varying vec3 vPosition;
-
-      
-      varying vec2 vUv; // 追加: セグメント内のUV座標
-      
-      void main() {
-        // 表示範囲外は破棄
-        if (vShow < 0.01) {
-          discard;
-        }
-        
-        
-        // 先端を丸くする処理
-        float fadeWidth = 0.03;
-        float alpha = 1.0;
-        
-
-        
-        // 進捗に応じたグラデーション
-        alpha *= step(uStart, vProgress);
-        alpha *= smoothstep(uEnd, uEnd - fadeWidth, vProgress);
-
-
-        vec3 color = uColor;
-
-        
-        color = vec3(1.0, 0.5, 0.0); // オレンジ色に設定
-        color.r = vProgress;
-        color.g = vPosition.x + 0.5;
-
-        gl_FragColor = vec4(color, alpha);
-      }
-    `;
 const fragmentShader = `
       precision highp float;
       
@@ -500,6 +456,10 @@ export class Stage {
     if (!this.isWebGLAvailable()) {
       return;
     }
+
+
+    Common.init();
+    Mouse.init();
     window.addEventListener('resize', () => this.onWindowResize(), false);
     window.addEventListener('mousemove', (event) => this.mousemove(event), false);
 
@@ -539,17 +499,7 @@ export class Stage {
     this.camera = new THREE.PerspectiveCamera(75, this.getCanvasSize().width / this.getCanvasSize().height, 0.1, 100);
 
 
-    this.renderer = new THREE.WebGLRenderer(
-      {
-        alpha: true,
-      }
-    );
-    this.renderer.setPixelRatio(
-      window.innerWidth < 767 ? 4 :
-        Math.min(4096
-          / window.innerWidth, 4)
-    );
-
+ 
     this.scene = new THREE.Scene();
 
 
@@ -569,9 +519,9 @@ export class Stage {
     //    this.scene.add(axisHelper);
 
 
-    this.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
-    this.container.appendChild(this.renderer.domElement);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    
+    this.container.appendChild(Common.renderer.domElement);
+    this.controls = new OrbitControls(this.camera, Common.renderer.domElement);
     this.stats = new Stats();
     this.container.appendChild(this.stats.dom);
   }
@@ -669,13 +619,13 @@ export class Stage {
     const hamkdashi = points.filter(el => {
       const dis = el.length()
 
-      const holePos = new THREE.Vector3(-0.34 ,-0.05,0.5);
+      const holePos = new THREE.Vector3(-0.34, -0.05, 0.5);
       const holeDist = el.distanceTo(holePos);
-      if(holeDist < 0.2){
+      if (holeDist < 0.2) {
 
-//        console.log('holeDist:', holeDist);
+        //        console.log('holeDist:', holeDist);
       }
-      return (dis > 1.6 && el.x < 0)|| holeDist < 0.2
+      return (dis > 1.6 && el.x < 0) || holeDist < 0.2
       //|| dis > 2.1 && el.x > 0
     })
 
@@ -709,7 +659,7 @@ export class Stage {
     }
 
     // 条件を満たす点が見つからなかった場合は元の配列を返す
-    console.log('9999:', 9999);
+
     return points;
   }
 
@@ -858,7 +808,59 @@ export class Stage {
 
   }
 
+  bgScene!: THREE.Scene;
+  bgCamera!: THREE.PerspectiveCamera;
+  simulation!: Simulation;
+    output!: THREE.Mesh<any, THREE.RawShaderMaterial, THREE.Object3DEventMap>;
   addObject = () => {
+
+    this.simulation = new Simulation();
+
+    this.bgScene = new THREE.Scene();
+    this.bgCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    this.bgCamera.position.z = 5;
+    this.bgCamera.lookAt(0, 0, 0);
+
+    console.log('this.simulation.fbos.vel_0!.texture:', this.simulation.fbos.vel_0!.texture);
+    this.output = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.RawShaderMaterial({
+        vertexShader: face_vert,
+        fragmentShader: color_frag,
+        transparent: true,
+        uniforms: {
+          velocity: {
+            value: this.simulation.fbos.vel_0!.texture
+          },
+          boundarySpace: {
+            value: new THREE.Vector2()
+          },
+          uImageChange: {
+            value: 0
+          },
+          resolution: {
+            value: new THREE.Vector2(window.innerWidth, window.outerHeight)
+          },
+          textureSize: {
+            value: new THREE.Vector2(1734, 1029)
+          },
+          uTime: {
+            value: 0
+          },
+          uMouseString: {
+            value: 0
+          },
+          uMouse: {
+            value: new THREE.Vector2(0, 0)
+          }
+        },
+      })
+    );
+    //        this.output.visible = false;
+
+    this.bgScene.add(this.output);
+
+    //this.bgScene.add(bgPlane);
 
     for (var i = 0; i < 130; i++) {
       //if (i === 4) {
@@ -909,7 +911,7 @@ export class Stage {
 
   private onWindowResize(): void {
 
-    this.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
+    Common.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
   }
 
 
@@ -934,6 +936,25 @@ export class Stage {
   linesParamPrev: number[] = []
 
   private render(_time: number): void {
+
+    Mouse.update();
+    Common.update();
+
+    Common.renderer.clear();
+
+    
+    
+    this.output.material.uniforms.resolution.value.set(window.innerWidth, window.outerHeight);
+    this.output.material.uniforms.uTime.value = _time / 1000
+    
+    
+    
+    
+    //    this.simulation.update();
+    //    Common.renderer.render(this.bgScene, this.bgCamera);
+
+    Common.renderer.clearDepth();
+
     this.mouseLerp.x = lerp(this.mouseLerp.x, this.mouse.x, 0.05);
     this.mouseLerp.y = lerp(this.mouseLerp.y, this.mouse.y, 0.05);
 
@@ -1016,7 +1037,7 @@ export class Stage {
         } */
     //this.trailMaterial.dashOffset += 1; // ダッシュのオフセットを更新して動きをつける
 
-    this.renderer.render(this.scene!, this.camera);
+    Common.renderer.render(this.scene!, this.camera);
   }
 
   initRate = {
