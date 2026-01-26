@@ -132,7 +132,7 @@ export class Stage {
     this.scene = new THREE.Scene();
     this.renderer.setSize(this.getCanvasSize().width, this.getCanvasSize().height);
     this.container.appendChild(this.renderer.domElement);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    //this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.stats = new Stats();
 
 
