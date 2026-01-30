@@ -304,7 +304,9 @@ main {
     &.inview {
       opacity: 1;
       transform: translateY(0px);
-      transition: transform 2s $easeOutQuint, opacity 1s;
+      transition:
+        transform 2s $easeOutQuint,
+        opacity 1s;
     }
   }
   &__content {
@@ -324,7 +326,9 @@ main {
       &.inview {
         opacity: 1;
         transform: translateY(0px);
-        transition: transform 3s $easeOutQuint, opacity 1s;
+        transition:
+          transform 3s $easeOutQuint,
+          opacity 1s;
       }
     }
     &:nth-child(2) {
@@ -333,7 +337,9 @@ main {
       &.inview {
         opacity: 1;
         transform: translateY(0px);
-        transition: transform 3s $easeOutQuint 0.4s, opacity 1s 0.4s;
+        transition:
+          transform 3s $easeOutQuint 0.4s,
+          opacity 1s 0.4s;
       }
     }
   }
@@ -452,3 +458,76 @@ body {
     display: inline-block;
   }
 }
+.bell-face-page {
+  background-color: #ccc;
+}
+.bellface-canvas {
+  pointer-events: none;
+}
+.bell-about {
+  &__section {
+    height: 200vh;
+  }
+  &__inner {
+    display: flex;
+    height: 100%;
+    align-items: flex-start;
+    position: relative;
+    justify-content: center;
+  }
+
+  &__info {
+    color: black;
+    &-wrap {
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  &__pic {
+    width: 500px;
+    aspect-ratio: 1/1;
+
+    position: sticky;
+    //    top: calc(50% - 250px);
+
+    .noise {
+      mix-blend-mode: overlay;
+      opacity: 0.2;
+      position: absolute;
+      z-index: 2;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+  &__grad {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    width: 42%;
+    mask-size: contain;
+    mask-image: url("/img/bell_grad.png");
+    &:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #fff 0%, #000 100%);
+
+      transform: rotate(var(--rotate)) scale(2);
+    }
+    img {
+      opacity: 0;
+    }
+
+    &:before {
+    }
+  }
+}
+

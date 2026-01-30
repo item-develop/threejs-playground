@@ -19,36 +19,38 @@
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="stylesheet" href="/scss/style.scss">
 
-  <style>
-    .line-h {
-      position: absolute;
-      left: 50%;
-      width: 2px;
-      height: 100%;
-      height: 100%;
-      z-index: 100;
-      background-color: #ccc;
-      display: none;
-    }
-
-    .line-v {
-      position: absolute;
-      top: 50%;
-      width: 100%;
-      height: 2px;
-      z-index: 100;
-      background-color: #ccc;
-      display: none;
-    }
-  </style>
 </head>
 
-<body>
+<body class="bell-face-page">
   <div>
     <div class="h-100svh-skel"></div>
-    <div class="line-v"></div>
-    <div class="line-h"></div>
-    <canvas id="three"></canvas>
+    <canvas id="three" class="bellface-canvas"></canvas>
+
+    <div class="" style="height: 3000px; background-color: red;"></div>
+
+    <div id="bell-about-section" class="bell-about__section">
+      <div class="bell-about__inner">
+        <div class="bell-about__info-wrap">
+          <div class="bell-about__info">
+            dasdasdad
+            dasdasdad
+            dasdasdad
+            dasdasdad
+            dasdasdad
+          </div>
+        </div>
+        <div class="bell-about__pic">
+          <img class="noise" src="/img/noise.png" alt="">
+          <img class="illust" src="/img/bell_illust.png" alt="">
+
+          <div class="bell-about__grad">
+            <img src="/img/bell_grad.png" alt="">
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="" style="height: 3000px; background-color: blue;"></div>
 
   </div>
   <script type="module" src="/js/bellface/index.ts"></script>

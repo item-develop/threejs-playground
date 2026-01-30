@@ -6,13 +6,10 @@ import { Stage } from "./Stage";
 
 window.addEventListener("DOMContentLoaded", () => {
   new ScrollController();
-  const smoothScroll = new SmoothScroll();
-  smoothScroll.init();
   new Common();
   window.addEventListener('load', () => {
     new Stage()
   })
-
   const top = new Top();
   top.init();
 });
