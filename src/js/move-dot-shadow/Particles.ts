@@ -1,10 +1,9 @@
-const instanceCount = 20;
-const RADIUS = 0.4
-const VEROCITY_BASE = 0.2
+const instanceCount = 15;
+const RADIUS = 0.7
+const VEROCITY_BASE = 1
 type Vector2D = [number, number];
 
 import * as THREE from 'three';
-import { DecalGeometry } from 'three/examples/jsm/Addons.js';
 
 export class Particles {
   //private WIDTH = 10;
@@ -29,8 +28,11 @@ export class Particles {
 
   // デカール関連のプロパティを追加
   private decals: THREE.Mesh[] = [];
-  private decalMaterial: THREE.MeshPhongMaterial;
+
   private sphereMeshes: THREE.Mesh[] = []; // 個別の球体メッシュを保持
+  private colors: THREE.Color[] = []; // 各パーティクルの色
+  private originalHues: number[] = []; // 各パーティクルの元の色相
+  private collidingPairs: Set<string> = new Set(); // 衝突中のペアを追跡
 
 
   getViewport: () => {
@@ -56,16 +58,7 @@ export class Particles {
     this.renderer = renderer
     this.scene = scene
 
-    // デカール用のマテリアルを初期化
-    this.decalMaterial = new THREE.MeshPhongMaterial({
-      map: new THREE.TextureLoader().load('/chara/img/logo_jamp.png'),
-      transparent: true,
-      opacity: 0.8,
-      depthTest: true,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -4,
-    });
+
 
     this.init();
   }
@@ -84,19 +77,44 @@ export class Particles {
     this.canvasSize = this.getCanvasSize();
     this.viewport = this.getViewport();
 
-    const geometry = new THREE.SphereGeometry(RADIUS);
-    this.geometry = geometry;
+    const geometry = new THREE.CircleGeometry(RADIUS, 32);
 
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.7,
-      metalness: 0.2,
-    });
 
     // インスタンス化されたメッシュの代わりに個別のメッシュを作成
     for (let i = 0; i < instanceCount; i++) {
+      // 各パーティクルにランダムな鮮やかな色を設定（彩度100%, 明度50% = 純色）
+
+
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          roughness: { value: 0.7 },
+          metalness: { value: 0.2 },
+        },
+        vertexShader: `
+          varying vec3 vNormal;
+          varying vec2 vUv;
+          void main() {
+            vNormal = normalize(normalMatrix * normal);
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec3 vNormal;
+          varying vec2 vUv;
+          void main() {
+            float centerDistance = length(vUv - vec2(0.5));
+            // blur effect
+            float alpha = smoothstep(0.5, 0.15, centerDistance);
+            gl_FragColor = vec4(
+              vec3(0.)
+            , alpha*0.5);
+          }
+        `,
+        transparent: true
+      });
       const sphereMesh = new THREE.Mesh(geometry, material);
-      sphereMesh.castShadow = true;
+
       this.scene.add(sphereMesh);
       this.sphereMeshes.push(sphereMesh);
 
@@ -110,56 +128,11 @@ export class Particles {
       ] as [number, number];
 
       this.pos.push(pos);
-      //this.scale.push([2, 2]);
 
-      // 各球体にデカールを追加
-      this.addDecalToSphere(i);
-
-      const axis = new THREE.Vector3(-.1, 1, 0).normalize();
-      //console.log('axis:', axis);
-      // 3-2. 回転角度を計算: θ = (speed * deltaTime) / RADIUS
-      const angle = 10;
-
-      // 3-3. 回転用のクォータニオンを作って乗算
-      const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-      sphereMesh.quaternion.multiply(q);
 
     }
   }
 
-
-  // 球体にデカールを追加するメソッド
-  private addDecalToSphere(index: number): void {
-    const sphere = this.sphereMeshes[index];
-
-    try {
-      // デカールの位置とサイズを設定
-      const position = new THREE.Vector3(0, 0, RADIUS);
-      const size = new THREE.Vector3(RADIUS * 1, RADIUS * 1, RADIUS * 1);
-      const orientation = new THREE.Euler(0, 0, 0);
-
-      // デカールジオメトリの作成
-      const decalGeometry = new DecalGeometry(
-        sphere,
-        position,
-        orientation,
-        size
-      );
-
-      // デカールメッシュの作成
-      const decalMesh = new THREE.Mesh(decalGeometry, this.decalMaterial);
-      decalMesh.renderOrder = 1;
-
-      // デカールの初期位置を設定
-      decalMesh.position.copy(sphere.position);
-      decalMesh.position.z += RADIUS;
-
-      this.decals[index] = decalMesh;
-      this.scene.add(decalMesh);
-    } catch (error) {
-      console.error('Error creating decal:', error);
-    }
-  }
 
 
 
@@ -245,19 +218,32 @@ export class Particles {
     const deltaTime = diff / 200;
 
     // 衝突判定と速度更新
+    const currentCollidingPairs = new Set<string>();
     for (let i = 0; i < instanceCount; i++) {
       for (let j = i + 1; j < instanceCount; j++) {
-        const { newVel1, newVel2 } = this.calculateCollision(
-          this.pos[i],
-          this.velocities[i],
-          this.pos[j],
-          this.velocities[j]
-        );
+        const dx = this.pos[i][0] - this.pos[j][0];
+        const dy = this.pos[i][1] - this.pos[j][1];
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const pairKey = `${i}-${j}`;
 
-        this.velocities[i] = newVel1;
-        this.velocities[j] = newVel2;
+        if (distance < RADIUS * 2) {
+          currentCollidingPairs.add(pairKey);
+
+        }
+
+        /*     const { newVel1, newVel2 } = this.calculateCollision(
+              this.pos[i],
+              this.velocities[i],
+              this.pos[j],
+              this.velocities[j]
+            );
+    
+            this.velocities[i] = newVel1;
+            this.velocities[j] = newVel2; */
       }
     }
+
+
 
     // 位置の更新と画面端での反射
     for (let i = 0; i < instanceCount; i++) {
@@ -287,49 +273,10 @@ export class Particles {
 
       // 球体の位置と回転を更新
       const sphere = this.sphereMeshes[i];
-      sphere.position.set(newPos[0], newPos[1], 0);
+      sphere.position.set(newPos[0], newPos[1], 0.01 * i); // Z軸で少しずつ重ねることで影を表現
 
 
-      // 移動方向に基づいて回転を計算
-      //const velocity = this.velocities[i];
-      //      const speed = Math.sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]);
 
-      const vx = this.velocities[i][0];
-      const vy = this.velocities[i][1];
-      const speed = Math.sqrt(vx * vx + vy * vy);
-
-      //    速度がほぼゼロの場合は回転更新しなくてOK
-      if (speed > 1e-6) {
-        // 回転軸 (XY平面で速度ベクトルを90°回転させたもの)
-        const axis = new THREE.Vector3(-vy, vx, 0).normalize();
-
-        //console.log('axis:', axis);
-        // 3-2. 回転角度を計算: θ = (speed * deltaTime) / RADIUS
-        const angle = (speed * deltaTime) / RADIUS;
-
-        // 3-3. 回転用のクォータニオンを作って乗算
-        const q = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-
-        // sphere.quaternion に今の回転を掛け合わせる
-        sphere.quaternion.premultiply(q);
-
-      }
-
-
-      // デカールの位置と回転も更新
-      const decal = this.decals[i];
-      if (decal) {
-        decal.position.copy(sphere.position);
-        decal.rotation.copy(sphere.rotation);
-
-
-        /* // デカールの位置オフセットを計算
-        const offset = new THREE.Vector3(0, 0, RADIUS);
-        offset.applyEuler(decal.rotation);
-        decal.position.add(offset);
-
-         */
-      }
     }
   }
 

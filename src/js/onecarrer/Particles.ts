@@ -72,12 +72,15 @@ export class Particles {
     this.canvasSize = this.getCanvasSize()
     this.viewport = this.getViewport();
 
+    const texture = new THREE.TextureLoader().load('/flame.png');
     const geometory = new THREE.PlaneGeometry(
       RADIUS, RADIUS, 1, 1);
     this.geometry = geometory;
     const maaterial = new THREE.ShaderMaterial({
       uniforms: {
-
+        uTexture: {
+          value: texture
+        }
       },
       vertexShader: `
       varying vec2 vUv;
@@ -88,14 +91,18 @@ export class Particles {
       `,
       fragmentShader: `
       varying vec2 vUv;
+      uniform sampler2D uTexture;
       void main() {
         // CIRCLE
         vec2 coord = vUv - 0.5;
         float dist = length(coord);
-        if (dist > 0.5) discard;
-        gl_FragColor = vec4(.0, .0, .0, 1.0);
+
+        color = texture2D(uTexture, vUv);
+        
+        gl_FragColor = color;
       }
       `,
+
     })
     this.mesh = new THREE.InstancedMesh(geometory, maaterial, instanceCount);
     for (

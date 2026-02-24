@@ -125,118 +125,118 @@ export class Stage {
     return new THREE.ShaderMaterial({
       glslVersion: "300 es",
       vertexShader: `
-      \n            out vec2 vUv;
-      \n            out vec3 vColor;
-      \n            uniform vec3 pageVertices[${(Kl.PAGE_SEGMENT_X + 1) * (Kl.PAGE_SEGMENT_Y + 1)}];
-      \n            void main() {
-      \n                vUv = uv;
-      \n
-      \n                float gx = uv.x * (float(${Kl.PAGE_SEGMENT_X}));
-      \n                float gy = uv.y * (float(${Kl.PAGE_SEGMENT_Y}));
-      \n                int x0 = int(floor(gx));
-      \n                int y0 = int(floor(gy));
-      \n                int idx00 = clamp(y0 * (${Kl.PAGE_SEGMENT_X} + 1) + x0, 0, ${(Kl.PAGE_SEGMENT_X + 1) * (Kl.PAGE_SEGMENT_Y + 1) - 1});
-      \n                vec3 p00 = pageVertices[idx00];
-      \n                vColor = p00;
-      \n                gl_Position = vec4(position, 1.0);
-      \n            }
-      \n        `,
+                  out vec2 vUv;
+                  out vec3 vColor;
+                  uniform vec3 pageVertices[${(Kl.PAGE_SEGMENT_X + 1) * (Kl.PAGE_SEGMENT_Y + 1)}];
+                  void main() {
+                      vUv = uv;
+      
+                      float gx = uv.x * (float(${Kl.PAGE_SEGMENT_X}));
+                      float gy = uv.y * (float(${Kl.PAGE_SEGMENT_Y}));
+                      int x0 = int(floor(gx));
+                      int y0 = int(floor(gy));
+                      int idx00 = clamp(y0 * (${Kl.PAGE_SEGMENT_X} + 1) + x0, 0, ${(Kl.PAGE_SEGMENT_X + 1) * (Kl.PAGE_SEGMENT_Y + 1) - 1});
+                      vec3 p00 = pageVertices[idx00];
+                      vColor = p00;
+                      gl_Position = vec4(position, 1.0);
+                  }
+              `,
       fragmentShader: `
-      \n            precision highp float;
-      \n            in vec2 vUv;
-      \n            in vec3 vColor;
-      \n            layout(location=0) out vec4 outPos;
-      \n            layout(location=1) out vec4 outNormal;
-      \n            uniform vec3 pageVertices[${(Kl.PAGE_SEGMENT_X + 1) * (Kl.PAGE_SEGMENT_Y + 1)}];
-      \n
-      \n            // 4x4 Beźier basis
-            \n            vec4 bernstein(float t){
-            \n                float it = 1.0 - t;
-            \n                float b0 = it*it*it;
-            \n                float b1 = 3.0*t*it*it;
-            \n                float b2 = 3.0*t*t*it;
-            \n                float b3 = t*t*t;
-            \n                return vec4(b0,b1,b2,b3);
-            \n            }
-            \n            vec4 dBernstein(float t){
-            \n                float it = 1.0 - t;
-            \n                float db0 = -3.0*it*it;
-            \n                float db1 = 3.0 - 12.0*t + 9.0*t*t;
-            \n                float db2 = 6.0*t - 9.0*t*t;
-            \n                float db3 = 3.0*t*t;
-            \n                return vec4(db0, db1, db2, db3);
-            \n            }
-            \n
-            \n            vec3 bezierEval(vec2 uv){
-            \n                vec4 Bu = bernstein(clamp(uv.x,0.0,1.0));
-            \n                vec4 Bv = bernstein(clamp(uv.y,0.0,1.0));
-            \n                vec3 p = vec3(0.0);
-            \n                for(int j=0;j<4;j++){
-            \n                    for(int i=0;i<4;i++){
-            \n                    int idx = j * (${Kl.PAGE_SEGMENT_X}+1) + i;
-            \n                    p += pageVertices[idx] * Bu[i] * Bv[j];
-            \n                    }
-            \n                }
-            \n                return p;
-            \n            }
-            \n            void bezierEvalWithDerivatives(vec2 uv, out vec3 P, out vec3 dPu, out vec3 dPv){
-            \n                float u = clamp(uv.x,0.0,1.0);
-            \n                float v = clamp(uv.y,0.0,1.0);
-            \n                vec4 Bu = bernstein(u);
-            \n                vec4 Bv = bernstein(v);
-            \n                vec4 dBu = dBernstein(u);
-            \n                vec4 dBv = dBernstein(v);
-            \n                P = vec3(0.0);
-            \n                dPu = vec3(0.0);
-            \n                dPv = vec3(0.0);
-            \n                for(int j=0;j<4;j++){
-            \n                    for(int i=0;i<4;i++){
-            \n                        int idx = j * (${Kl.PAGE_SEGMENT_X}+1) + i;
-            \n                        vec3 cp = pageVertices[idx];
-            \n                        float w  = Bu[i]  * Bv[j];
-            \n                        float wu = dBu[i] * Bv[j];
-            \n                        float wv = Bu[i]  * dBv[j];
-            \n                        P  += cp * w;
-            \n                        dPu += cp * wu;
-            \n                        dPv += cp * wv;
-            \n                    }
-            \n                }
-            \n            }
-            \n
-            \n            void main(){
-            \n                vec2 grid   = vec2(float(${Kl.PAGE_DIVISION_X}) + 1.0, float(${Kl.PAGE_DIVISION_Y}) + 1.0);
-            \n                vec2 ij     = round(vUv * (grid - 1.0));
-            \n                ij          = clamp(ij, vec2(0.0), grid - 1.0);
-            \n
-            \n                vec2 uvParam = vec2(
-            \n                    ij.x / float(${Kl.PAGE_DIVISION_X}),
-            \n                    ij.y / float(${Kl.PAGE_DIVISION_Y})
-            \n                );
-            \n                vec3 P, dPu, dPv;
-            \n                bezierEvalWithDerivatives(uvParam, P, dPu, dPv);
-            \n
-            \n                outPos = vec4(
-            \n                    (P.x / float(${Kl.PAGE_WIDTH}) + 1.0) / 2.0,
-            \n                    P.y / float(${Kl.PAGE_WIDTH}),
-            \n                    (P.z / float(${Kl.PAGE_HEIGHT}) + 0.5),
-            \n                    1.0
-            \n                );
-            \n                // outPos = vec4(
-            \n                //     vec3((vColor.x / float(${Kl.PAGE_WIDTH}) + 1.0) / 2.0,vColor.y / float(${Kl.PAGE_WIDTH}),(vColor.z / float(${Kl.PAGE_HEIGHT}) + 1.0) / 1.0),
-            \n                //     1.0
-            \n                // );
-            \n
-            \n                // 右手系に合わせて外積順を反転（以前の実装は dFdx x (-dFdy)）
-            \n                vec3 N = normalize(cross(dPv, dPu));
-            \n                if (dot(N,N) < 1e-6) {
-            \n                    vec3 dPosdx = dFdx(P);
-            \n                    vec3 dPosdy = dFdy(P);
-            \n                    N = normalize(cross(dPosdx, -dPosdy));
-            \n                }
-            \n                if (dot(N,N) < 1e-6) N = vec3(0.0,1.0,0.0);
-            \n                outNormal = vec4(N*0.5+0.5, 1.0);
-            \n            }
-            \n        `,
+                  precision highp float;
+                  in vec2 vUv;
+                  in vec3 vColor;
+                  layout(location=0) out vec4 outPos;
+                  layout(location=1) out vec4 outNormal;
+                  uniform vec3 pageVertices[${(Kl.PAGE_SEGMENT_X + 1) * (Kl.PAGE_SEGMENT_Y + 1)}];
+      
+                  // 4x4 Beźier basis
+                        vec4 bernstein(float t){
+                            float it = 1.0 - t;
+                            float b0 = it*it*it;
+                            float b1 = 3.0*t*it*it;
+                            float b2 = 3.0*t*t*it;
+                            float b3 = t*t*t;
+                            return vec4(b0,b1,b2,b3);
+                        }
+                        vec4 dBernstein(float t){
+                            float it = 1.0 - t;
+                            float db0 = -3.0*it*it;
+                            float db1 = 3.0 - 12.0*t + 9.0*t*t;
+                            float db2 = 6.0*t - 9.0*t*t;
+                            float db3 = 3.0*t*t;
+                            return vec4(db0, db1, db2, db3);
+                        }
+            
+                        vec3 bezierEval(vec2 uv){
+                            vec4 Bu = bernstein(clamp(uv.x,0.0,1.0));
+                            vec4 Bv = bernstein(clamp(uv.y,0.0,1.0));
+                            vec3 p = vec3(0.0);
+                            for(int j=0;j<4;j++){
+                                for(int i=0;i<4;i++){
+                                int idx = j * (${Kl.PAGE_SEGMENT_X}+1) + i;
+                                p += pageVertices[idx] * Bu[i] * Bv[j];
+                                }
+                            }
+                            return p;
+                        }
+                        void bezierEvalWithDerivatives(vec2 uv, out vec3 P, out vec3 dPu, out vec3 dPv){
+                            float u = clamp(uv.x,0.0,1.0);
+                            float v = clamp(uv.y,0.0,1.0);
+                            vec4 Bu = bernstein(u);
+                            vec4 Bv = bernstein(v);
+                            vec4 dBu = dBernstein(u);
+                            vec4 dBv = dBernstein(v);
+                            P = vec3(0.0);
+                            dPu = vec3(0.0);
+                            dPv = vec3(0.0);
+                            for(int j=0;j<4;j++){
+                                for(int i=0;i<4;i++){
+                                    int idx = j * (${Kl.PAGE_SEGMENT_X}+1) + i;
+                                    vec3 cp = pageVertices[idx];
+                                    float w  = Bu[i]  * Bv[j];
+                                    float wu = dBu[i] * Bv[j];
+                                    float wv = Bu[i]  * dBv[j];
+                                    P  += cp * w;
+                                    dPu += cp * wu;
+                                    dPv += cp * wv;
+                                }
+                            }
+                        }
+            
+                        void main(){
+                            vec2 grid   = vec2(float(${Kl.PAGE_DIVISION_X}) + 1.0, float(${Kl.PAGE_DIVISION_Y}) + 1.0);
+                            vec2 ij     = round(vUv * (grid - 1.0));
+                            ij          = clamp(ij, vec2(0.0), grid - 1.0);
+            
+                            vec2 uvParam = vec2(
+                                ij.x / float(${Kl.PAGE_DIVISION_X}),
+                                ij.y / float(${Kl.PAGE_DIVISION_Y})
+                            );
+                            vec3 P, dPu, dPv;
+                            bezierEvalWithDerivatives(uvParam, P, dPu, dPv);
+            
+                            outPos = vec4(
+                                (P.x / float(${Kl.PAGE_WIDTH}) + 1.0) / 2.0,
+                                P.y / float(${Kl.PAGE_WIDTH}),
+                                (P.z / float(${Kl.PAGE_HEIGHT}) + 0.5),
+                                1.0
+                            );
+                            // outPos = vec4(
+                            //     vec3((vColor.x / float(${Kl.PAGE_WIDTH}) + 1.0) / 2.0,vColor.y / float(${Kl.PAGE_WIDTH}),(vColor.z / float(${Kl.PAGE_HEIGHT}) + 1.0) / 1.0),
+                            //     1.0
+                            // );
+            
+                            // 右手系に合わせて外積順を反転（以前の実装は dFdx x (-dFdy)）
+                            vec3 N = normalize(cross(dPv, dPu));
+                            if (dot(N,N) < 1e-6) {
+                                vec3 dPosdx = dFdx(P);
+                                vec3 dPosdy = dFdy(P);
+                                N = normalize(cross(dPosdx, -dPosdy));
+                            }
+                            if (dot(N,N) < 1e-6) N = vec3(0.0,1.0,0.0);
+                            outNormal = vec4(N*0.5+0.5, 1.0);
+                        }
+                    `,
       uniforms: {
         pageVertices: {
           value: [

@@ -11,9 +11,9 @@ void main(){
     float len = length(vel);
 
     gl_FragColor = vec4(vec3(
-        floor(len*20.) / 20. ,
-        floor(len*20.) / 20. ,
-        floor(len*20.) / 20. 
+        floor(len*200.) / 200. ,
+        floor(len*200.) / 200. ,
+        floor(len*200.) / 200. 
     ),  0.7);
     
     //vec4 pic2 = texture2D(uPic, uv);

@@ -1,10 +1,9 @@
-const instanceCount = 20;
+const instanceCount = 15;
 const RADIUS = 0.4
-const VEROCITY_BASE = 0.2
+const VEROCITY_BASE = 1
 type Vector2D = [number, number];
 
 import * as THREE from 'three';
-import { DecalGeometry } from 'three/examples/jsm/Addons.js';
 
 export class Particles {
   //private WIDTH = 10;
@@ -29,8 +28,11 @@ export class Particles {
 
   // デカール関連のプロパティを追加
   private decals: THREE.Mesh[] = [];
-  private decalMaterial: THREE.MeshPhongMaterial;
+
   private sphereMeshes: THREE.Mesh[] = []; // 個別の球体メッシュを保持
+  private colors: THREE.Color[] = []; // 各パーティクルの色
+  private originalHues: number[] = []; // 各パーティクルの元の色相
+  private collidingPairs: Set<string> = new Set(); // 衝突中のペアを追跡
 
 
   getViewport: () => {
@@ -56,16 +58,7 @@ export class Particles {
     this.renderer = renderer
     this.scene = scene
 
-    // デカール用のマテリアルを初期化
-    this.decalMaterial = new THREE.MeshPhongMaterial({
-      map: new THREE.TextureLoader().load('/chara/img/logo_jamp.png'),
-      transparent: true,
-      opacity: 0.8,
-      depthTest: true,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -4,
-    });
+
 
     this.init();
   }
@@ -87,14 +80,20 @@ export class Particles {
     const geometry = new THREE.SphereGeometry(RADIUS);
     this.geometry = geometry;
 
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.7,
-      metalness: 0.2,
-    });
-
     // インスタンス化されたメッシュの代わりに個別のメッシュを作成
     for (let i = 0; i < instanceCount; i++) {
+      // 各パーティクルにランダムな鮮やかな色を設定（彩度100%, 明度50% = 純色）
+      const hue = Math.random();
+      const color = new THREE.Color().setHSL(hue, 1.0, 0.5);
+      this.colors.push(color);
+      this.originalHues.push(hue);
+
+      const material = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 0.7,
+        metalness: 0.2,
+      });
+
       const sphereMesh = new THREE.Mesh(geometry, material);
       sphereMesh.castShadow = true;
       this.scene.add(sphereMesh);
@@ -110,10 +109,6 @@ export class Particles {
       ] as [number, number];
 
       this.pos.push(pos);
-      //this.scale.push([2, 2]);
-
-      // 各球体にデカールを追加
-      this.addDecalToSphere(i);
 
       const axis = new THREE.Vector3(-.1, 1, 0).normalize();
       //console.log('axis:', axis);
@@ -127,39 +122,6 @@ export class Particles {
     }
   }
 
-
-  // 球体にデカールを追加するメソッド
-  private addDecalToSphere(index: number): void {
-    const sphere = this.sphereMeshes[index];
-
-    try {
-      // デカールの位置とサイズを設定
-      const position = new THREE.Vector3(0, 0, RADIUS);
-      const size = new THREE.Vector3(RADIUS * 1, RADIUS * 1, RADIUS * 1);
-      const orientation = new THREE.Euler(0, 0, 0);
-
-      // デカールジオメトリの作成
-      const decalGeometry = new DecalGeometry(
-        sphere,
-        position,
-        orientation,
-        size
-      );
-
-      // デカールメッシュの作成
-      const decalMesh = new THREE.Mesh(decalGeometry, this.decalMaterial);
-      decalMesh.renderOrder = 1;
-
-      // デカールの初期位置を設定
-      decalMesh.position.copy(sphere.position);
-      decalMesh.position.z += RADIUS;
-
-      this.decals[index] = decalMesh;
-      this.scene.add(decalMesh);
-    } catch (error) {
-      console.error('Error creating decal:', error);
-    }
-  }
 
 
 
@@ -245,8 +207,27 @@ export class Particles {
     const deltaTime = diff / 200;
 
     // 衝突判定と速度更新
+    const currentCollidingPairs = new Set<string>();
     for (let i = 0; i < instanceCount; i++) {
       for (let j = i + 1; j < instanceCount; j++) {
+        const dx = this.pos[i][0] - this.pos[j][0];
+        const dy = this.pos[i][1] - this.pos[j][1];
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const pairKey = `${i}-${j}`;
+
+        if (distance < RADIUS * 2) {
+          currentCollidingPairs.add(pairKey);
+
+          // 新規衝突時のみ色を混ぜる（継続中の衝突では混ぜない）
+          if (!this.collidingPairs.has(pairKey)) {
+            const mixRatio = 0.3; // 40%ずつ相手の色を取り込む
+            const c1 = this.colors[i].clone();
+            const c2 = this.colors[j].clone();
+            this.colors[i].lerp(c2, mixRatio);
+            this.colors[j].lerp(c1, mixRatio);
+          }
+        }
+
         const { newVel1, newVel2 } = this.calculateCollision(
           this.pos[i],
           this.velocities[i],
@@ -257,6 +238,23 @@ export class Particles {
         this.velocities[i] = newVel1;
         this.velocities[j] = newVel2;
       }
+    }
+    this.collidingPairs = currentCollidingPairs;
+
+    // 色を回復させる（濁り防止＋色相の多様性維持）
+    const hsl = { h: 0, s: 0, l: 0 };
+    for (let i = 0; i < instanceCount; i++) {
+      this.colors[i].getHSL(hsl);
+      // 色相を元の色に向かって少しずつ引き戻す（色環上の最短距離で補間）
+      let hDiff = this.originalHues[i] - hsl.h;
+      if (hDiff > 0.5) hDiff -= 1.0;
+      if (hDiff < -0.5) hDiff += 1.0;
+      hsl.h += hDiff * 0.01 * VEROCITY_BASE;
+      // 彩度を1.0に向かって少しずつ押し戻す
+      hsl.s += (1.0 - hsl.s) * 0.01 * VEROCITY_BASE;
+      // 明度を0.5に向かって少しずつ押し戻す
+      hsl.l += (0.5 - hsl.l) * 0.01 * VEROCITY_BASE;
+      this.colors[i].setHSL(hsl.h, hsl.s, hsl.l);
     }
 
     // 位置の更新と画面端での反射
@@ -288,6 +286,9 @@ export class Particles {
       // 球体の位置と回転を更新
       const sphere = this.sphereMeshes[i];
       sphere.position.set(newPos[0], newPos[1], 0);
+
+      // マテリアルの色を更新
+      (sphere.material as THREE.MeshStandardMaterial).color.copy(this.colors[i]);
 
 
       // 移動方向に基づいて回転を計算

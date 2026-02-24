@@ -224,12 +224,12 @@ uniform sampler2D waterVelocity;
       if (abs(pos.x) > viewport.x/2.) {
         bool isXPositive = pos.x > 0.0;
         vel.x = isXPositive ? -abs(vel.x) : abs(vel.x); 
-        waterVel.x = isXPositive ? -abs(waterVel.x) : abs(waterVel.x); 
+       // waterVel.x = isXPositive ? -abs(waterVel.x) : abs(waterVel.x); 
       }
       if (abs(pos.y) > viewport.y/2.) {
         bool isYPositive = pos.y > 0.0;
         vel.y = isYPositive ? -abs(vel.y) : abs(vel.y);
-        waterVel.y = isYPositive ? -abs(waterVel.y) : abs(waterVel.y);
+       // waterVel.y = isYPositive ? -abs(waterVel.y) : abs(waterVel.y);
       }
       // You can add additional velocity updates here if needed
 
@@ -291,13 +291,10 @@ uniform sampler2D waterVelocity;
 
 
       gl_FragColor = vec4( vel.xy , 0., 1.0 );
-      gl_FragColor = vec4( lastVel.xy , 0., 1.0 );
+      //gl_FragColor = vec4( lastVel.xy , 0., 1.0 );
 
       //gl_FragColor = vec4( mixVelo.xy,0., 1.0 );
-//      gl_FragColor = vec4( waterVel.xy,0., 1.0 );
-     
-
-      //gl_FragColor = vec4( vec3(0.), 1.0 );  
+      //gl_FragColor = vec4( waterVel.xy,0., 1.0 );
             }
         `;
     }
